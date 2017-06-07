@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+require 'irb/completion'
+
+def make_prompt str
+  hostname=`hostname -s`.chomp
+  cluster="xCLUSTERx"
+  ("[" + cluster  + "] " + hostname + ": " + "%~" + str).tap {|s| def s.dup; gsub('%~', Time.now.strftime("%H:%M:%S")); end }
+end
+
+IRB.conf[:PROMPT][:MY_PROMPT] = {
+  :PROMPT_I => make_prompt("> "),
+  :PROMPT_S => make_prompt(" "),
+  :PROMPT_C => make_prompt("* "),
+  :RETURN => "%s\n",
+}
+
+IRB.conf[:SAVE_HISTORY] = 100000
+IRB.conf[:PROMPT_MODE] = :MY_PROMPT

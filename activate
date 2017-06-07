@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+if [[ $- =~ i ]]; then
+  if [ -n "$BASH_VERSION" ]; then
+    export PATH=$(dirname ${BASH_SOURCE[0]})/bin:$PATH
+    source $(dirname ${BASH_SOURCE[0]})/lib/bash_completion
+  elif [ -n "ZSH_VERSION" ]; then
+    export PATH=$(echo $(dirname $0))/bin:$PATH
+  else
+    echo "Not suppported"
+  fi
+fi

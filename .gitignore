@@ -1,0 +1,9 @@
+.DS_Store
+*.swp
+config/
+data/
+lib/fzf
+lib/hbase-region-inspector/
+lib/hbase-tools/
+ext/
+!ext/example.rb
