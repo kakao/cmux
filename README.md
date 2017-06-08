@@ -454,7 +454,7 @@ Supported __only bash completion__ using [fzf](https://github.com/junegunn/fzf).
 cf. An example of the [Command List](#command-list) uses [fzf-tmux](https://github.com/junegunn/fzf/blob/master/bin/fzf-tmux).
 
 # License
-This software is licensed under the [Apache 2 license](LICENSE.txt), quoted below.
+This software is licensed under the [Apache 2 license](LICENSE), quoted below.
 
 Copyright 2017 Kakao Corp. <http://www.kakaocorp.com>
 
