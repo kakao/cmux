@@ -298,7 +298,7 @@ module CMUX
         cmd  = "java -jar #{HT_HOME}/#{hm}" \
                " assign #{zk} balancer #{onoff} #{opt}" \
                ' | tail -1'
-        msg = onoff ? 'Enabling auto balancer' : 'Disableig auto balancer'
+        msg = onoff ? 'Enabling auto balancer' : 'Disabling auto balancer'
         Formatter.puts_str(msg.red, true)
         msg = cmd.wrap(console_col_size - 26, "\n" + ' ' * 26)
         Formatter.puts_str("  └── #{msg}", true)
