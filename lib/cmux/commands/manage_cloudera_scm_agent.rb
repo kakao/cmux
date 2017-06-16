@@ -124,9 +124,9 @@ module CMUX
       # Build command options.
       def build_opts
         opt    = CHK::OptParser.new
-        banner = 'Usage: cmux COMMAND SCMAGENT_OPTION [OPTIONS]'
+        banner = 'Usage: cmux COMMAND SCMAGENT_COMMANDS [OPTIONS]'
         opt.banner(CMD, ALIAS, banner)
-        opt.separator('Scmagent options:')
+        opt.separator('Scmagent commands:')
         opt.scmagent
         opt.separator('Options:')
         opt.sync_option

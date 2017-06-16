@@ -1,65 +1,110 @@
 bind '"\e[0n": redraw-current-line'
 
-cmux_comp() {
-  local cmd=$1
-  local cur=$2
-  local prev=$3
-  local prefix="${COMP_WORDS[COMP_CWORD]}"
-
-  if [ ${COMP_CWORD} -eq 1 ]; then
-    cmux_cmd_cnt=$(($(cmux | sed '1,/Commands:$/d;/^$/,$d' | wc -l)+2))
-    cmux_cmd=$(cmux | sed $'s/\xc2\xa0/ /g' | sed '1,/Commands:$/d;/^$/,$d;s/^ *//g' \
-               | fzf +m --inline-info --reverse --header="COMMANDS" --height=$cmux_cmd_cnt --tiebreak=begin --query="$prefix" \
-               | awk '{print $1}')
-
-    COMPREPLY=( "$cmux_cmd" )
-    printf '\e[5n'
-    return
-  fi
-
-  if [ ${COMP_CWORD} -eq 2 ]; then
-    cmux_cmd=$prev
-    case $prev in
-      manage-cloudera-scm-agent|scmagent)
-      cmd_cnt=$(($(cmux $cmux_cmd -h \
-                   | sed '1,/options:$/d;/^$/,$d;s/[^a-z_]/ /g' \
-                   | xargs -n 1 | wc -l)+2))
-      cmd=$(cmux $cmux_cmd -h \
-            | sed '1,/options:$/d;/^$/,$d;s/[^a-z_]/ /g' \
-            | xargs -n 1 \
-            | fzf +m --inline-info --reverse --header="OPTIONS" --height=$cmd_cnt --tiebreak=begin --query="$prefix" \
-            | awk '{print $1}')
-      COMPREPLY=( "$cmd" )
-      printf '\e[5n'
-      ;;
-      *)
-        opt_cnt=$(cmux $cmux_cmd -h | grep "\-[a-z]*, \-\-" | wc -l)
-        opt=$(cmux $cmux_cmd -h | grep "\-[a-z]*, \-\-" \
-              | fzf +m --inline-info --reverse --header="OPTIONS" --height=$((opt_cnt+2)) --tiebreak=begin --query="$prefix" \
-              | awk '{print $2}')
-        COMPREPLY=( "$opt" )
-        printf '\e[5n'
-      ;;
-    esac
-    return
-  fi
-
-  if [ ${COMP_CWORD} -ge 3 ]; then
-    cmux_cmd=${COMP_WORDS[1]}
-    opt_cnt=$(cmux $cmux_cmd -h | grep "\-[a-z]*, \-\-" | wc -l)
-    case $prev in
-      -h|--help|-q|--query|-f|--file|-l|--list)
-      ;;
-      *)
-        opt=$(cmux $cmux_cmd -h | grep "\-[a-z]*, \-\-" \
-          | fzf +m --inline-info --reverse --header="OPTIONS" --height=$((opt_cnt+2)) --tiebreak=begin --query="$prefix" \
-          | awk '{print $2}')
-        COMPREPLY=( "$opt" )
-        printf '\e[5n'
-        return
-      ;;
-    esac
-  fi
+__line_cnt() {
+    wc -l <<< "$1"
 }
 
-complete -F cmux_comp -o default -o bashdefault cmux
+__fzf_height() {
+    echo $(($1+2))
+}
+
+__cmux_cmd_comp() {
+    local cmux_cmd comp IFS OIFS
+
+    cmux_cmd="$(cmux | sed $'s/\xc2\xa0/ /g' \
+                | sed '1,/Commands:$/d;/^$/,$d;s/^ *//g')"
+    height="$(__fzf_height "$(__line_cnt "$cmux_cmd")")"
+
+    comp=$(echo "$cmux_cmd" \
+            | fzf +m --inline-info --reverse --header="COMMANDS" \
+                --tiebreak=begin --query="$1" --height="$height" \
+            | awk '{print $1}')
+    COMPREPLY=( "$comp" )
+    printf '\e[5n'
+    return
+}
+
+__cmux_cmd_comp_1st_opt() {
+    local cmd_opt comp IFS OIFS
+
+    case $1 in
+        manage-cloudera-scm-agent|scmagent)
+            cmd_opt="$(cmux "$1" -h \
+                        | sed '1,/Scmagent commands:$/d;/^$/,$d;s/[^a-z_]/ /g' \
+                        | xargs -n 1)"
+            height="$(__fzf_height "$(__line_cnt "$cmd_opt")")"
+            comp=$(echo "$cmd_opt" \
+                    | fzf +m --inline-info --reverse --header="COMMAND" \
+                        --tiebreak=begin --query="$2" --height="$height" \
+                    | awk '{print $1}')
+        ;;
+        *)
+            cmd_opt="$(cmux "$1" -h | sed '1,/Options:$/d;/^$/,$d;s/^ *//g')"
+            height="$(__fzf_height "$(__line_cnt "$cmd_opt")")"
+            comp=$(echo "$cmd_opt" \
+                    | fzf +m --inline-info --reverse --header="OPTIONS" \
+                        --tiebreak=begin --query="$2" --height="$height" \
+                    | awk '{print $2}')
+        ;;
+    esac
+
+    COMPREPLY=( "$comp" )
+    printf '\e[5n'
+    return
+}
+
+__cmux_cmd_comp_opts() {
+    local cmd_opt cmd_opt_new comp IFS OIFS
+
+    case " ${COMP_WORDS[@]} " in
+        *" -h "* | *" --help "*)
+            return
+        ;;
+    esac
+
+    cmd_opt_new=()
+    cmd_opt="$(cmux "${COMP_WORDS[1]}" -h \
+                | sed '1,/Options:$/d;/^$/,$d;s/^ *//g')"
+
+    OIFS=IFS
+    IFS=$'\n'
+    for opt in $(echo "${cmd_opt[@]}"); do
+        opt_short=$(echo "$opt" | awk -F, '{print $1}')
+        opt_long=$(echo "$opt" | awk '{print $2}')
+        if [[ " ${COMP_WORDS[@]} " != *" $opt_short "* &&\
+              " ${COMP_WORDS[@]} " != *" $opt_long "* ]]; then
+            cmd_opt_new+=($opt)
+        fi
+    done
+    IFS=$OIFS
+
+    height="$(__fzf_height "${#cmd_opt_new[@]}")"
+    comp=$(printf '%s\n' "${cmd_opt_new[@]}" \
+           | fzf +m --inline-info --reverse --header="OPTIONS" \
+              --tiebreak=begin --query="$1" --height="$height" \
+           | awk '{print $2}')
+    COMPREPLY=( "$comp" )
+    printf '\e[5n'
+    return
+}
+
+__cmux_comp() {
+    # local cmd=$1
+    # local cur=$2
+    local prev=$3
+    local prefix="${COMP_WORDS[COMP_CWORD]}"
+
+    if [ "${COMP_CWORD}" -eq 1 ]; then
+        __cmux_cmd_comp "$prefix"
+    fi
+
+    if [ "${COMP_CWORD}" -eq 2 ]; then
+        __cmux_cmd_comp_1st_opt "$prev" "$prefix"
+    fi
+
+    if [ "${COMP_CWORD}" -ge 3 ]; then
+        __cmux_cmd_comp_opts "$prefix" 
+    fi
+}
+
+complete -F __cmux_comp -o default -o bashdefault cmux
