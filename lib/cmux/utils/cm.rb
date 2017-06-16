@@ -399,8 +399,8 @@ module CMUX
             end
           end.flatten.compact.first
         end
-        
-        #
+
+        # Colorize status string.
         def colorize_status(status)
           status = case status
                    when 'GOOD'       then status.green
