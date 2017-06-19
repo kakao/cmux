@@ -89,9 +89,9 @@ module CMUX
           user, password = cmlist.values_at('user', 'password')
 
           service, role_type = role.split('-').values_at(0, 1)
-          host    = hosts.find { |h| h[:cm] == cm && h[:cl] == cl }
-          url     = "#{host[:cm_url]}/api/#{host[:cm_api_ver]}" \
-                    "/clusters/#{cl}/services/#{service}/roles/#{role}"
+          host = hosts.find { |h| h[:cm] == cm && h[:cl] == cl }
+          url  = "#{host[:cm_url]}/api/#{host[:cm_api_ver]}" \
+                 "/clusters/#{cl}/services/#{service}/roles/#{role}"
 
           res = API.get_req(url:      url,
                             user:     user,
@@ -106,8 +106,8 @@ module CMUX
 
         # Check the HA status of the role.
         def check_ha_status(cm, cl, role)
-          status    = nil
-          msg       = 'Wait for HA status to become active'
+          status = nil
+          msg    = 'Wait for HA status to become active'
 
           (1..4).cycle.each do |i|
             status = ha_status(cm, cl, role)
