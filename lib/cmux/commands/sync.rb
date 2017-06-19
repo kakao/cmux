@@ -179,11 +179,11 @@ module CMUX
       # Roles of a given service.
       def roles(cm, api_base_url, user, password)
         @services.dig(cm, :cl).pmap do |cl, cl_props|
-          cl_props[:services].pmap do |svc, svc_props|
-            url   = "#{api_base_url}/clusters/#{cl}/services/#{svc}/roles"
+          cl_props[:services].pmap do |service, service_props|
+            url   = "#{api_base_url}/clusters/#{cl}/services/#{service}/roles"
             roles = API.get_req(url: url, user: user, password: password,
                                 props: :items, sym_name: true)
-            roles.map { |role| build_role_data(cm, svc_props, role) }
+            roles.map { |role| build_role_data(cm, service_props, role) }
           end
         end
       rescue StandardError => e
@@ -191,7 +191,7 @@ module CMUX
       end
 
       # Build role data.
-      def build_role_data(cm, svc, role)
+      def build_role_data(cm, service, role)
         @roles.dig(cm, :roles, role.dig(:hostRef, :hostId), role[:name]).merge!(
           roleType:     role[:type],
           roleUrl:      role[:roleUrl],
@@ -200,8 +200,8 @@ module CMUX
           roleHAStatus: role_ha_status(role),
           roleMOwners:  role[:maintenanceOwners].join(','),
           serviceName:  role[:serviceRef][:serviceName],
-          serviceType:  svc[:type],
-          serviceUrl:   svc[:serviceUrl]
+          serviceType:  service[:type],
+          serviceUrl:   service[:serviceUrl]
         )
       end
 
