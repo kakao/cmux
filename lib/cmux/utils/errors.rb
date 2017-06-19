@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-
 module CMUX
   # Raised when a command not registered in cmux is executed.
   class CMUXCommandError < StandardError

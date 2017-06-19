@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-
 module CMUX
   module Commands
     # Split tmux window and execute each command in each pane.

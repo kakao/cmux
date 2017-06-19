@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-
 module CMUX
   module Commands
     # CM API Synchronizer.

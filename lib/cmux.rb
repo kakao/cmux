@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-
 require 'optparse'
 require 'io/console'
 require 'json'

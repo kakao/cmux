@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-
 module CMUX
   module Commands
     # Open Service Web Console as the default browser.

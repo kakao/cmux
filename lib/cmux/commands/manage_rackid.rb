@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-
 module CMUX
   module Commands
     # Shows how the rackID(s) is allocated in CM and updates rackID(s).

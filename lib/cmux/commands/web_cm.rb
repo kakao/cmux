@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-
 module CMUX
   module Commands
     # Open the Cloudera Manager Web Console(s) as the default browser.

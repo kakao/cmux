@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-
 module CMUX
   # Regist new command.
   module Commands

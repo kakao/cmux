@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-
 module CMUX
   module Commands
     # Login via SSH to host(s) registered in these Cloudera Managers.

@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-
 # String
 class String
   # Colorized string - default.
