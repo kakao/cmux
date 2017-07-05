@@ -60,54 +60,71 @@ module CMUX
           end
         end
 
-        # Retrieves a specific CM REST resource.
-        def get_cm_rest_resource(cm, resource, props = nil)
-          user, password = get_user_pass(cm)
-          host = yield
-          url  = "#{host[:cm_url]}/api/#{host[:cm_api_ver]}#{resource}"
-          API.get_req(url: url, user: user, password: password, props: props,
-                      sym_name: true)
-        rescue CMUXConfigError
-          raise
+        # Retrieve user and password of the Cloudera Manager from cm.yaml
+        def get_user_pass(cm)
+          auth = Utils.cm_config(cm).values_at('user', 'password')
+          return auth unless auth.include?(nil)
+          raise CMUXConfigError, "'user' and 'password' of the '#{cm}'"
+        end
+
+        # Request CM REST API
+        def req_cm_rest_resource(args = {})
+          host = CM.hosts.find { |h| h[:cm] == args[:cm] }
+          url  = "#{host[:cm_url]}/api/#{host[:cm_api_ver]}#{args[:resource]}"
+          user, password = get_user_pass(args[:cm])
+          req_args = args.merge(url: url,
+                                user: user,
+                                password: password,
+                                sym_name: true)
+          yield req_args
         rescue StandardError => e
           raise CMAPIError, e.message
         end
 
-        # Retrieves the Cloudera Manager settings.
+        # Retrieve a specific CM REST resource
+        def get_cm_rest_resource(args = {})
+          req_cm_rest_resource(args) do |req_args|
+            API.get_req(req_args)
+          end
+        end
+
+        # Create entries of a specific CM REST resource
+        def post_cm_rest_resource(args = {})
+          args[:headers] = { 'Content-Type' => 'application/json' }
+          req_cm_rest_resource(args) do |req_args|
+            API.post_req(req_args)
+          end
+        end
+
+        # Update or edit entries of a specific CM REST resource
+        def put_cm_rest_resource(args = {})
+          args[:headers] = { 'Content-Type' => 'application/json' }
+          req_cm_rest_resource(args) do |req_args|
+            API.put_req(req_args)
+          end
+        end
+
+        # Retrieve the Cloudera Manager settings
         def get_cm_config(cm)
           resource = '/cm/config?view=full'
-          get_cm_rest_resource(cm, resource, :items) do
-            CM.hosts.find { |h| h[:cm] == cm }
+          get_cm_rest_resource(cm: cm, resource: resource, props: :items)
           end
         end
 
-        # Retrieves the configuration of a specific service.
+        # Retrieve the configuration of a specific service
         def get_service_config(cm, cl, service_name)
           resource = "/clusters/#{cl}/services/#{service_name}/config?view=full"
-          get_cm_rest_resource(cm, resource, :items) do
-            CM.hosts.find { |h| h[:cm] == cm && h[:cl] == cl }
-          end
+          get_cm_rest_resource(cm: cm, resource: resource, props: :items)
         end
 
-        # Retrieves the configuration of a specific role.
+        # Retrieve the configuration of a specific role
         def get_role_config(cm, cl, service_name, role_name)
           resource = "/clusters/#{cl}/services/#{service_name}" \
                      "/roles/#{role_name}/config?view=full"
-          get_cm_rest_resource(cm, resource, :items) do
-            CM.hosts.find { |h| h[:cm] == cm && h[:cl] == cl }
-          end
+          get_cm_rest_resource(cm: cm, resource: resource, props: :items)
         end
 
-        # Retrieves user and password of the Cloudera Manager from cm.yaml.
-        def get_user_pass(cm)
-          res = Utils.cm_config(cm).values_at('user', 'password')
-          if res.include?(nil)
-            raise CMUXConfigError, "#{cm}: 'user' and 'password'"
-          end
-          res
-        end
-
-        # Finds the host to which the roles are assigned.
+        # Find the host to which the roles are assigned
         def find_host_with_any_role(cm, cl, *roles)
           CM.hosts.find do |host|
             host[:cm] == cm && host[:cl] == cl &&
@@ -115,41 +132,41 @@ module CMUX
           end
         end
 
-        # Finds the Active NameNode of a specific cluster.
+        # Find the Active NameNode of a specific cluster
         def find_nn_active(cm, cl)
           find_host_with_any_role(cm, cl, 'NN(A)')
         end
 
-        # Finds the Zookeeper Leader of a specific cluster.
+        # Find the Zookeeper Leader of a specific cluster
         def find_zk_leader(cm, cl)
           find_host_with_any_role(cm, cl, 'ZK(L)', 'ZK(S)')
         end
 
-        # The Zookeeper Leader of a specific cluster.
+        # The Zookeeper Leader of a specific cluster
         def zk_leader(cm, cl)
           find_zk_leader(cm, cl)[:hostname]
         end
 
-        # Retrieves zookeeper client port.
+        # Retrieve zookeeper client port
         def zk_port(cm, cl, zk)
           role_name, props = CM.role_of_role_type(zk, 'ZOOKEEPER', 'SERVER')
           service_name     = props[:serviceName]
-          role_config = get_role_config(cm, cl, service_name, role_name)
+          role_config      = get_role_config(cm, cl, service_name, role_name)
           port = role_config.find { |config| config[:name] == 'clientPort' }
           port[:value] || port[:default]
         end
 
-        # Finds the Active HMaster of a specific cluster.
+        # Find the Active HMaster of a specific cluster
         def find_hm_active(cm, cl)
           find_host_with_any_role(cm, cl, 'HM(A)')
         end
 
-        # The Active HMaster of a specific cluster.
+        # The Active HMaster of a specific cluster
         def hm_active(cm, cl)
           find_hm_active(cm, cl)[:hostname]
         end
 
-        # Retrieves SECURITY_REALM of the Cloudera Manager.
+        # Retrieve SECURITY_REALM of the Cloudera Manager
         def security_realm(cm)
           realm = get_cm_config(cm).find do |config|
             config[:name] == 'SECURITY_REALM'
@@ -157,29 +174,29 @@ module CMUX
           realm[:value] || realm[:default]
         end
 
-        # Returns a role details for a specific role type running on this host.
+        # Return a role details for a specific role type running on this host
         def role_of_role_type(cmhost, service_type, role_type)
           cmhost[:roles].find do |_, v|
             v[:serviceType] == service_type && v[:roleType] == role_type
           end
         end
 
-        # Returns a service name for a specific role type running on this host.
+        # Return a service name for a specific role type running on this host
         def service_name_of_role_type(cmhost, service_type, role_type)
           role = role_of_role_type(cmhost, service_type, role_type)
           role[1][:serviceName]
         end
 
-        # Checks that kerberos authentication is enabled.
+        # Check that kerberos authentication is enabled
         def kerberos_enabled?(cm, cl, config_name)
-          service_name = yield
+          service_name   = yield
           service_config = get_service_config(cm, cl, service_name)
           service_config.find do |config|
             config[:name] == config_name && config[:value] == 'kerberos'
           end
         end
 
-        # Checks that the kerberos authentication for hbase is enabled.
+        # Check that the kerberos authentication for hbase is enabled
         def hbase_kerberos_enabled?(cm, cl)
           hm_active    = find_hm_active(cm, cl)
           service_type = 'HBASE'
@@ -190,7 +207,7 @@ module CMUX
           end
         end
 
-        # Checks that the kerberos authentication for hadoop is enabled.
+        # Check that the kerberos authentication for hadoop is enabled
         def hadoop_kerberos_enabled?(cm, cl)
           nn_active    = find_nn_active(cm, cl)
           service_type = 'HDFS'
@@ -203,23 +220,11 @@ module CMUX
 
         # The HA status of the role
         def ha_status(cm, cl, role)
-          cmlist = Utils.cm_config(cm)
-          user, password = cmlist.values_at('user', 'password')
-
           service, role_type = role.split('-').values_at(0, 1)
-          host = hosts.find { |h| h[:cm] == cm && h[:cl] == cl }
-          url  = "#{host[:cm_url]}/api/#{host[:cm_api_ver]}" \
-                 "/clusters/#{cl}/services/#{service}/roles/#{role}"
-
-          res = API.get_req(url:      url,
-                            user:     user,
-                            password: password,
-                            sym_name: true)
-
-          ha_type = role_type == 'SERVER' ? :zooKeeperServerMode : :haStatus
-          res[ha_type]
-        rescue StandardError => e
-          raise CMAPIError, e.message
+          resource = "/clusters/#{cl}/services/#{service}/roles/#{role}"
+          role     = get_cm_rest_resource(cm: cm, resource: resource)
+          ha_type  = role_type == 'SERVER' ? :zooKeeperServerMode : :haStatus
+          role[ha_type]
         end
 
         # Check the HA status of the role
@@ -243,21 +248,11 @@ module CMUX
           msg = flag ? 'Enter maintenance mode' : 'Exit maintenance mode'
           FMT.puts_str(msg.red, true)
 
-          cmlist = Utils.cm_config(cm)
-          user, password = cmlist.values_at('user', 'password')
-
-          service = role.split('-')[0]
-          cmd     = flag ? 'enterMaintenanceMode' : 'exitMaintenanceMode'
-          host    = hosts.find { |h| h[:cm] == cm && h[:cl] == cl }
-          url     = "#{host[:cm_url]}/api/#{host[:cm_api_ver]}" \
-                    "/clusters/#{cl}/services/#{service}/roles/#{role}" \
-                    "/commands/#{cmd}"
-          headers = { 'Content-Type' => 'application/json' }
-
-          API.post_req(url:      url,
-                       user:     user,
-                       password: password,
-                       headers:  headers)
+          service  = role.split('-')[0]
+          cmd      = flag ? 'enterMaintenanceMode' : 'exitMaintenanceMode'
+          resource = "/clusters/#{cl}/services/#{service}/roles/#{role}" \
+                     "/commands/#{cmd}"
+          post_cm_rest_resource(cm: cm, resource: resource)
 
           begin
             owner = maintenance_owners(cm, cl, role)
@@ -266,8 +261,6 @@ module CMUX
 
           msg = '└── Maintenance owners: ' + owner.sort.to_s.green
           FMT.puts_str(msg, true)
-        rescue StandardError => e
-          raise CMAPIError, e.message
         end
 
         # Put the role into maintenace mode
@@ -282,38 +275,16 @@ module CMUX
 
         # The maintenance owners of the role
         def maintenance_owners(cm, cl, role)
-          cmlist = Utils.cm_config(cm)
-          user, password = cmlist.values_at('user', 'password')
-
-          service = role.split('-')[0]
-          host    = hosts.find { |h| h[:cm] == cm && h[:cl] == cl }
-          url     = "#{host[:cm_url]}/api/#{host[:cm_api_ver]}" \
-                    "/clusters/#{cl}/services/#{service}/roles/#{role}"
-
-          API.get_req(url:      url,
-                      user:     user,
-                      password: password,
-                      sym_name: true)[:maintenanceOwners]
-        rescue StandardError => e
-          raise CMAPIError, e.message
+          service  = role.split('-')[0]
+          resource = "/clusters/#{cl}/services/#{service}/roles/#{role}"
+          get_cm_rest_resource(cm: cm, resource: resource)[:maintenanceOwners]
         end
 
         # The role state
         def role_state(cm, cl, role)
-          cmlist = Utils.cm_config(cm)
-          user, password = cmlist.values_at('user', 'password')
-
-          service = role.split('-')[0]
-          host    = hosts.find { |h| h[:cm] == cm && h[:cl] == cl }
-          url     = "#{host[:cm_url]}/api/#{host[:cm_api_ver]}" \
-                    "/clusters/#{cl}/services/#{service}/roles/#{role}"
-
-          API.get_req(url:      url,
-                      user:     user,
-                      password: password,
-                      sym_name: true)[:roleState]
-        rescue StandardError => e
-          raise CMAPIError, e.message
+          service  = role.split('-')[0]
+          resource = "/clusters/#{cl}/services/#{service}/roles/#{role}"
+          get_cm_rest_resource(cm: cm, resource: resource)[:roleState]
         end
 
         # Change the role state
@@ -327,21 +298,10 @@ module CMUX
 
           FMT.puts_str(msg, true)
 
-          cmlist = Utils.cm_config(cm)
-          user, password = cmlist.values_at('user', 'password')
-
-          service = role.split('-')[0]
-          host    = hosts.find { |h| h[:cm] == cm && h[:cl] == cl }
-          url     = "#{host[:cm_url]}/api/#{host[:cm_api_ver]}" \
-                    "/clusters/#{cl}/services/#{service}/roleCommands/#{cmd}"
-          headers = { 'Content-Type' => 'application/json' }
-          body    = JSON.generate('items' => [role])
-
-          API.post_req(url:      url,
-                       user:     user,
-                       password: password,
-                       body:     body,
-                       headers:  headers)
+          service  = role.split('-')[0]
+          resource = "/clusters/#{cl}/services/#{service}/roleCommands/#{cmd}"
+          body     = JSON.generate('items' => [role])
+          post_cm_rest_resource(cm: cm, resource: resource, body: body)
 
           start_time = Time.now
           (1..4).cycle.each do |i|
@@ -374,20 +334,11 @@ module CMUX
 
         # The Nameservices of the HDFS service
         def nameservices(cm, cl, service)
-          cmlist = Utils.cm_config(cm)
-          user, password = cmlist.values_at('user', 'password')
-
-          host = hosts.find { |h| h[:cm] == cm && h[:cl] == cl }
-          url  = "#{host[:cm_url]}/api/#{host[:cm_api_ver]}" \
-                 "/clusters/#{cl}/services/#{service}/nameservices"
-
-          API.get_req(url:      url,
-                      user:     user,
-                      password: password,
-                      sym_name: true)[:items]
+          resource = "/clusters/#{cl}/services/#{service}/nameservices"
+          get_cm_rest_resource(cm: cm, resource: resource, props: :items)
         rescue StandardError => e
           raise CMUXNameServiceError if e.message.include?('404 Not Found')
-          raise CMAPIError, e.message
+          raise
         end
 
         # The Nameservices that are assigned the NameNode
@@ -412,9 +363,6 @@ module CMUX
         def failover_nn(cm, cl, role, nameservice)
           service = role.split('-')[0]
 
-          cmlist = Utils.cm_config(cm)
-          user, password = cmlist.values_at('user', 'password')
-
           case ha_status(cm, cl, role)
           when 'ACTIVE'
             standby = ha_paired_nn(cm, cl, service, nameservice)[0]
@@ -428,17 +376,10 @@ module CMUX
             msg = "  => [#{hostname_s}] #{standby} (STANDBY)"
             FMT.puts_str(msg, true)
 
-            host = hosts.find { |h| h[:cm] == cm && h[:cl] == cl }
-            url  = "#{host[:cm_url]}/api/#{host[:cm_api_ver]}" \
-                   "/clusters/#{cl}/services/#{service}/commands/hdfsFailover"
-            headers = { 'Content-Type' => 'application/json' }
-            body    = JSON.generate('items' => [role, standby])
-
-            API.post_req(url:      url,
-                         user:     user,
-                         password: password,
-                         body:     body,
-                         headers:  headers)
+            resource = "/clusters/#{cl}/services/#{service}" \
+                       '/commands/hdfsFailover'
+            body     = JSON.generate('items' => [role, standby])
+            post_cm_rest_resource(cm: cm, resource: resource, body: body)
 
             msg = 'Wait to complete'
             (1..4).cycle.each do |i|
@@ -462,50 +403,33 @@ module CMUX
           msg = 'Roll the edits of an HDFS Nameservice'.red
           FMT.puts_str(msg.red, true)
 
-          service = role.split('-')[0]
-          cmlist  = Utils.cm_config(cm)
-          user, password = cmlist.values_at('user', 'password')
-
-          host = hosts.find { |h| h[:cm] == cm && h[:cl] == cl }
-          url  = "#{host[:cm_url]}/api/#{host[:cm_api_ver]}" \
-                 "/clusters/#{cl}/services/#{service}/commands/hdfsRollEdits"
-          headers = { 'Content-Type' => 'application/json' }
+          service  = role.split('-')[0]
+          resource = "/clusters/#{cl}/services/#{service}" \
+                     '/commands/hdfsRollEdits'
 
           nameservices(cm, cl, service).map do |n|
-            body = JSON.generate('nameservice' => n[:name])
-            cmd_id = API.post_req(url:      url,
-                                  user:     user,
-                                  password: password,
-                                  body:     body,
-                                  sym_name: true,
-                                  headers:  headers)[:id]
+            body   = JSON.generate('nameservice' => n[:name])
+            cmd_id = post_cm_rest_resource(cm: cm,
+                                           resource: resource,
+                                           body: body)[:id]
+            msg    = 'Wait to complete'
 
-            msg = 'Wait to complete'
             (1..4).cycle.each do |i|
               print "\r#{FMT.cur_dt}   "
               print "#{msg.ljust(msg.length).red} #{SPIN[i % 4]}"
-              command_status(cm, cl, cmd_id)[:success] && break
+              command_status(cm, cmd_id)[:success] && break
               sleep 1
             end
+
             print "\r#{FMT.cur_dt}   "
             puts "#{msg.ljust(msg.length).red} #{'[OK]'.green}"
           end
-        rescue StandardError => e
-          raise CMAPIError, e.message
         end
 
         # A detailed information on an asynchronous command
-        def command_status(cm, cl, cmd_id)
-          cmlist = Utils.cm_config(cm)
-          user, password = cmlist.values_at('user', 'password')
-          host = hosts.find { |h| h[:cm] == cm && h[:cl] == cl }
-          url  = "#{host[:cm_url]}/api/#{host[:cm_api_ver]}/commands/#{cmd_id}"
-          API.get_req(url:      url,
-                      user:     user,
-                      password: password,
-                      sym_name: true)
-        rescue StandardError => e
-          raise CMAPIError, e.message
+        def command_status(cm, cmd_id)
+          resource = "/commands/#{cmd_id}"
+          get_cm_rest_resource(cm: cm, resource: resource)
         end
 
         # The hostname where this role runs

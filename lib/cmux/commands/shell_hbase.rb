@@ -73,7 +73,7 @@ module CMUX
         cmd +  %( hbase shell\")
       end
 
-      # Retrieves keberos principal for this HBase cluster.
+      # Retrieve keberos principal for this HBase cluster
       def get_principal(list, cm, cl)
         krb_enabled = CM.hbase_kerberos_enabled?(cm, cl)
         return unless krb_enabled

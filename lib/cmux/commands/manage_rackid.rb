@@ -164,17 +164,9 @@ module CMUX
 
       # Update rackid of host
       def update_host_rackid(host, rackid)
-        url = "#{host[:cm_url]}/api/#{host[:cm_api_ver]}/hosts/#{host[:hostid]}"
-        body = JSON.generate('rackId' => rackid)
-        headers = { 'Content-Type' => 'application/json' }
-        user, password = Utils.cm_config(host[:cm])
-                              .values_at('user', 'password')
-
-        API.put_req(url:      url,
-                    body:     body,
-                    headers:  headers,
-                    user:     user,
-                    password: password)
+        resource = "/hosts/#{host[:hostid]}"
+        body     = JSON.generate('rackId' => rackid)
+        CM.put_cm_rest_resource(cm: host[:cm], resource: resource, body: body)
       end
 
       # Build command options
