@@ -83,32 +83,25 @@ module CMUX
 
         # Retrieve a specific CM REST resource
         def get_cm_rest_resource(args = {})
-          req_cm_rest_resource(args) do |req_args|
-            API.get_req(req_args)
-          end
+          req_cm_rest_resource(args) { |req_args| API.get_req(req_args) }
         end
 
         # Create entries of a specific CM REST resource
         def post_cm_rest_resource(args = {})
           args[:headers] = { 'Content-Type' => 'application/json' }
-          req_cm_rest_resource(args) do |req_args|
-            API.post_req(req_args)
-          end
+          req_cm_rest_resource(args) { |req_args| API.post_req(req_args) }
         end
 
         # Update or edit entries of a specific CM REST resource
         def put_cm_rest_resource(args = {})
           args[:headers] = { 'Content-Type' => 'application/json' }
-          req_cm_rest_resource(args) do |req_args|
-            API.put_req(req_args)
-          end
+          req_cm_rest_resource(args) { |req_args| API.put_req(req_args) }
         end
 
         # Retrieve the Cloudera Manager settings
         def get_cm_config(cm)
           resource = '/cm/config?view=full'
           get_cm_rest_resource(cm: cm, resource: resource, props: :items)
-          end
         end
 
         # Retrieve the configuration of a specific service
