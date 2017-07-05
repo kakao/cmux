@@ -23,10 +23,9 @@ module CMUX
 
       # tput rmcup
       def tput_rmcup
-        if @smcup
-          @smcup = false
-          system 'tput rmcup'
-        end
+        return unless @smcup
+        @smcup = false
+        system 'tput rmcup'
       end
 
       # Return a column size of console.

@@ -76,7 +76,7 @@ module CMUX
       # Build hbase-table-stat options.
       def build_hts_opts(cm, secured)
         opt = "--interval #{@opt[:interval]}"
-        opt << Utils.gen_krb_opt_for_ht(cm) if secured == 'Y'
+        opt += Utils.gen_krb_opt_for_ht(cm) if secured == 'Y'
         opt
       end
 

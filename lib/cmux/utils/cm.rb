@@ -14,7 +14,7 @@ module CMUX
 
           table  = FMT.table(header: header, body: body, rjust: [0])
           fzfopt = "+m --tiebreak=begin --header-lines=2 --header='#{title}'"
-          fzfopt << " --no-clear #{args[:fzf_opt]}"
+          fzfopt += " --no-clear #{args[:fzf_opt]}"
 
           selected = Utils.fzf(list: table, opt: fzfopt)
           Utils.exit_if_empty(selected, 'No items selected')
@@ -144,7 +144,7 @@ module CMUX
             sleep 1
           end until flag == res.include?('ROLE')
 
-          msg = '  └── Maintenance owners: ' + res.sort.to_s.green
+          msg = '└── Maintenance owners: ' + owner.sort.to_s.green
           FMT.puts_str(msg, true)
         rescue StandardError => e
           raise CMAPIError, e.message
@@ -226,8 +226,8 @@ module CMUX
           start_time = Time.now
           (1..4).cycle.each do |i|
             current_state = role_state(cm, cl, role)
-            print "\r#{FMT.cur_dt}   └── "
-            print "#{current_state.ljust(8).red} #{SPIN[i % 4]}"
+            print "\r#{FMT.cur_dt} "
+            print "#{current_state.capitalize.ljust(8).red} #{SPIN[i % 4].red}"
             state == current_state && break
             if (Time.now.to_i - start_time.to_i) > max_wait.to_i
               raise CMUXMaxWaitTimeError, max_wait.to_s

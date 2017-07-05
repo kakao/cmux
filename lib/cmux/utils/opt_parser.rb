@@ -16,22 +16,22 @@ module CMUX
         def banner(cmd, cmd_alias, banner = nil)
           @parser.new do |opt|
             opt.banner = banner || 'Usage: cmux COMMAND [OPTIONS]'
-            opt.banner << "\n\nCommand:\n"
-            opt.banner << "    #{cmd}, #{cmd_alias}\n\n"
+            opt.banner += "\n\nCommand:\n"
+            opt.banner += "    #{cmd}, #{cmd_alias}\n\n"
           end
         end
 
         # separator
         def separator(title)
-          @parser.new { |opt| opt.banner << "#{title}\n" }
+          @parser.new { |opt| opt.banner += "#{title}\n" }
         end
 
         # Lists of roles.
         def roles
           @parser.new do |opt|
             body = slice_list(ROLE_TYPES.keys.sort, 3)
-            FMT.table(body: body).each { |e| opt.banner << "#{e}\n" }
-            opt.banner << "\n"
+            FMT.table(body: body).each { |e| opt.banner += "#{e}\n" }
+            opt.banner += "\n"
           end
         end
 
@@ -39,15 +39,15 @@ module CMUX
         def scmagent
           @parser.new do |opt|
             body = slice_list(SCMAGENT_ARGS.sort, 3)
-            FMT.table(body: body).each { |e| opt.banner << "#{e}\n" }
-            opt.banner << "\n"
+            FMT.table(body: body).each { |e| opt.banner += "#{e}\n" }
+            opt.banner += "\n"
           end
         end
 
         # Add the description of the 'shell_command' to the banner.
         def shell_command
           @parser.new do |opt|
-            opt.banner << "    shell_command[ shell_command[ ...]]
+            opt.banner += "    shell_command[ shell_command[ ...]]
     One or more shell commands. Each command is separated by a space and
     commands which contain spaces must be quoted\n\n"
           end

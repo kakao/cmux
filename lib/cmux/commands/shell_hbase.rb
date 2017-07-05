@@ -71,11 +71,11 @@ module CMUX
         if cl_secured == 'Y'
           principal = list.dig(cm, 'service', 'hbase', 'kerberos', 'principal')
           raise CMUXNoPrincipalError if principal.nil?
-          cmd << %( kinit #{principal};)
+          cmd += %( kinit #{principal};)
         end
 
-        cmd << %( HADOOP_USER_NAME=#{@opt[:user]}) if @opt[:user]
-        cmd << %( hbase shell\")
+        cmd += %( HADOOP_USER_NAME=#{@opt[:user]}) if @opt[:user]
+        cmd += %( hbase shell\")
       end
 
       # Build command.
