@@ -43,7 +43,7 @@ module CMUX
     end
 
     def message
-      "#{@message}: The `cm.yaml` must be configured. Please see the README."
+      "#{@message}: The 'cm.yaml' must be configured. Please see the README."
     end
   end
 
