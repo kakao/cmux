@@ -27,7 +27,7 @@ module CMUX
 
       private
 
-      LABEL = %I[cm cl_disp cdh_ver cl_secured cl].freeze
+      LABEL = %I[cm cl_disp cdh_ver cl].freeze
 
       # Select cluster(s) to run 'hbase-region-inspector'
       def select_clusters(hosts)
@@ -46,7 +46,7 @@ module CMUX
         body   = hosts.select { |h| h[:role_stypes].include?('HM(A)') }
                       .map { |h| h.values_at(*LABEL) }
                       .sort_by { |e| e.map(&:djust) }
-        FMT.table(header: header, body: body, rjust: [2, 3, 4])
+        FMT.table(header: header, body: body, rjust: [2])
       end
 
       # Run 'hbase-region-inspector'
@@ -61,8 +61,8 @@ module CMUX
       # Build command
       def build_command(cluster)
         banner = build_banner(cluster[:cl_disp], cluster[:cdh_ver])
-        hri = Utils.hri4cdh(cluster[:cdh_ver])
-        opt = build_hri_opts(cluster[:cm], cluster[:cl], cluster[:cl_secured])
+        hri    = Utils.hri4cdh(cluster[:cdh_ver])
+        opt    = build_hri_opts(cluster[:cm], cluster[:cl])
         "#{banner} #{HRI_HOME}/#{hri} #{opt}"
       end
 
@@ -73,15 +73,20 @@ module CMUX
       end
 
       # Build 'hbase-region-inspector' options
-      def build_hri_opts(cm, cl, secured)
+      def build_hri_opts(cm, cl)
+        build_hri_port_number
+        zk          = CM.zk_leader(cm, cl)
+        krb_enabled = CM.hbase_kerberos_enabled?(cm, cl)
+        krb_opt     = zk
+        krb_opt     = Utils.gen_krb_opt_for_hri(cm, zk) if krb_enabled
+
+        "--admin #{krb_opt} #{@hri_port} #{@opt[:interval]}"
+      end
+
+      # Build a port number of hbase-region-inspector.
+      def build_hri_port_number
         @hri_port += 1
         @hri_port += 1 while CHK.port_open?(nil, @hri_port, 1)
-
-        zk  = CM.zk_leader(cm, cl)
-        opt = '--admin '
-        opt << (secured == 'Y' ? Utils.gen_krb_opt_for_hri(cm, zk) : zk)
-        opt << " #{@hri_port} #{@opt[:interval]}"
-        opt
       end
 
       # Build command options

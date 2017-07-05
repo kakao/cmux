@@ -82,12 +82,12 @@ module CMUX
 
       # Print selected hosts
       def print_the_selection(cluster, hosts)
-        cm, cl, cl_disp, cdh_ver, secured = cluster.values_at(0..-2)
+        cm, cl, cl_disp, cdh_ver = cluster.values_at(0..-2)
 
         puts 'ROLLING RESTART ROLES'.red
         FMT.horizonal_splitter('-')
 
-        print_cluster(cm, cl, cl_disp, cdh_ver, secured)
+        print_cluster(cm, cl, cl_disp, cdh_ver)
         print_hbase_manager(cm, cl, cdh_ver) if include_rs?(hosts)
         print_hosts(hosts)
 

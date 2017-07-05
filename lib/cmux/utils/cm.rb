@@ -23,7 +23,7 @@ module CMUX
 
         # All clusters
         def clusters(cms = nil)
-          label = %I[cm cm_ver cm_url cm_api_ver cl cl_disp cdh_ver cl_secured]
+          label = %I[cm cm_ver cm_url cm_api_ver cl cl_disp cdh_ver]
           CM.hosts(cms).group_by { |h| h.slice(*label) }
             .map { |h, v| h.merge(hosts: v.count.to_s) }
         end
@@ -45,7 +45,6 @@ module CMUX
                   cl:            cl,
                   cl_disp:       cl_props[:displayName],
                   cdh_ver:       cl_props[:version],
-                  cl_secured:    cl_props[:isSecured] ? 'Y' : 'N',
                   hostid:        h,
                   hostname:      h_props[:hostname],
                   ipaddress:     h_props[:ipAddress],
@@ -61,24 +60,145 @@ module CMUX
           end
         end
 
-        # The Zookeeper Leader of the cluster
-        def zk_leader(cm, cl)
-          res = hosts.find do |host|
-            host[:cm] == cm &&
-              host[:cl] == cl &&
-              (host[:role_stypes] & ['ZK(L)', 'ZK(S)']).any?
-          end
-          res && res[:hostname]
+        # Retrieves a specific CM REST resource.
+        def get_cm_rest_resource(cm, resource, props = nil)
+          user, password = get_user_pass(cm)
+          host = yield
+          url  = "#{host[:cm_url]}/api/#{host[:cm_api_ver]}#{resource}"
+          API.get_req(url: url, user: user, password: password, props: props,
+                      sym_name: true)
+        rescue CMUXConfigError
+          raise
+        rescue StandardError => e
+          raise CMAPIError, e.message
         end
 
-        # The Active HMaster of the cluster
-        def hm_active(cm, cl)
-          res = hosts.find do |host|
-            host[:cm] == cm &&
-              host[:cl] == cl &&
-              host[:role_stypes].include?('HM(A)')
+        # Retrieves the Cloudera Manager settings.
+        def get_cm_config(cm)
+          resource = '/cm/config?view=full'
+          get_cm_rest_resource(cm, resource, :items) do
+            CM.hosts.find { |h| h[:cm] == cm }
           end
-          res && res[:hostname]
+        end
+
+        # Retrieves the configuration of a specific service.
+        def get_service_config(cm, cl, service_name)
+          resource = "/clusters/#{cl}/services/#{service_name}/config?view=full"
+          get_cm_rest_resource(cm, resource, :items) do
+            CM.hosts.find { |h| h[:cm] == cm && h[:cl] == cl }
+          end
+        end
+
+        # Retrieves the configuration of a specific role.
+        def get_role_config(cm, cl, service_name, role_name)
+          resource = "/clusters/#{cl}/services/#{service_name}" \
+                     "/roles/#{role_name}/config?view=full"
+          get_cm_rest_resource(cm, resource, :items) do
+            CM.hosts.find { |h| h[:cm] == cm && h[:cl] == cl }
+          end
+        end
+
+        # Retrieves user and password of the Cloudera Manager from cm.yaml.
+        def get_user_pass(cm)
+          res = Utils.cm_config(cm).values_at('user', 'password')
+          if res.include?(nil)
+            raise CMUXConfigError, "#{cm}: 'user' and 'password'"
+          end
+          res
+        end
+
+        # Finds the host to which the roles are assigned.
+        def find_host_with_any_role(cm, cl, *roles)
+          CM.hosts.find do |host|
+            host[:cm] == cm && host[:cl] == cl &&
+              (host[:role_stypes] & roles).any?
+          end
+        end
+
+        # Finds the Active NameNode of a specific cluster.
+        def find_nn_active(cm, cl)
+          find_host_with_any_role(cm, cl, 'NN(A)')
+        end
+
+        # Finds the Zookeeper Leader of a specific cluster.
+        def find_zk_leader(cm, cl)
+          find_host_with_any_role(cm, cl, 'ZK(L)', 'ZK(S)')
+        end
+
+        # The Zookeeper Leader of a specific cluster.
+        def zk_leader(cm, cl)
+          find_zk_leader(cm, cl)[:hostname]
+        end
+
+        # Retrieves zookeeper client port.
+        def zk_port(cm, cl, zk)
+          role_name, props = CM.role_of_role_type(zk, 'ZOOKEEPER', 'SERVER')
+          service_name     = props[:serviceName]
+          role_config = get_role_config(cm, cl, service_name, role_name)
+          port = role_config.find { |config| config[:name] == 'clientPort' }
+          port[:value] || port[:default]
+        end
+
+        # Finds the Active HMaster of a specific cluster.
+        def find_hm_active(cm, cl)
+          find_host_with_any_role(cm, cl, 'HM(A)')
+        end
+
+        # The Active HMaster of a specific cluster.
+        def hm_active(cm, cl)
+          find_hm_active(cm, cl)[:hostname]
+        end
+
+        # Retrieves SECURITY_REALM of the Cloudera Manager.
+        def security_realm(cm)
+          realm = get_cm_config(cm).find do |config|
+            config[:name] == 'SECURITY_REALM'
+          end
+          realm[:value] || realm[:default]
+        end
+
+        # Returns a role details for a specific role type running on this host.
+        def role_of_role_type(cmhost, service_type, role_type)
+          cmhost[:roles].find do |_, v|
+            v[:serviceType] == service_type && v[:roleType] == role_type
+          end
+        end
+
+        # Returns a service name for a specific role type running on this host.
+        def service_name_of_role_type(cmhost, service_type, role_type)
+          role = role_of_role_type(cmhost, service_type, role_type)
+          role[1][:serviceName]
+        end
+
+        # Checks that kerberos authentication is enabled.
+        def kerberos_enabled?(cm, cl, config_name)
+          service_name = yield
+          service_config = get_service_config(cm, cl, service_name)
+          service_config.find do |config|
+            config[:name] == config_name && config[:value] == 'kerberos'
+          end
+        end
+
+        # Checks that the kerberos authentication for hbase is enabled.
+        def hbase_kerberos_enabled?(cm, cl)
+          hm_active    = find_hm_active(cm, cl)
+          service_type = 'HBASE'
+          role_type    = 'MASTER'
+          config_name  = 'hbase_security_authentication'
+          kerberos_enabled?(cm, cl, config_name) do
+            service_name_of_role_type(hm_active, service_type, role_type)
+          end
+        end
+
+        # Checks that the kerberos authentication for hadoop is enabled.
+        def hadoop_kerberos_enabled?(cm, cl)
+          nn_active    = find_nn_active(cm, cl)
+          service_type = 'HDFS'
+          role_type    = 'NAMENODE'
+          config_name  = 'hadoop_security_authentication'
+          kerberos_enabled?(cm, cl, config_name) do
+            service_name_of_role_type(nn_active, service_type, role_type)
+          end
         end
 
         # The HA status of the role
@@ -140,9 +260,9 @@ module CMUX
                        headers:  headers)
 
           begin
-            res = maintenance_owners(cm, cl, role)
+            owner = maintenance_owners(cm, cl, role)
             sleep 1
-          end until flag == res.include?('ROLE')
+          end until flag == owner.include?('ROLE')
 
           msg = '└── Maintenance owners: ' + owner.sort.to_s.green
           FMT.puts_str(msg, true)
@@ -400,11 +520,11 @@ module CMUX
 
         # Colorize status string
         def colorize_status(status)
-          status = case status
-                   when 'GOOD'       then status.green
-                   when 'CONCERNING' then status.yellow
-                   else status.red
-                   end
+          case status
+          when 'GOOD'       then status.green
+          when 'CONCERNING' then status.yellow
+          else status.red
+          end
         end
       end
     end

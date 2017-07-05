@@ -26,13 +26,13 @@ module CMUX
 
       private
 
-      LABEL = %I[cm cl_disp cl_secured hostname].freeze
+      LABEL = %I[cm cl_disp hostname cl].freeze
 
       # Select cluster(s) to run 'impala-shell'
       def select_hosts
         title  = "Select cluster(s) to run impala shell:\n".red
         table  = build_host_table(CM.hosts)
-        fzfopt = "-n1,2 #{@opt[:query]} --header='#{title}'"
+        fzfopt = "-n1,2 --with-nth=..-2 #{@opt[:query]} --header='#{title}'"
 
         selected = Utils.fzf(list: table, opt: fzfopt)
         Utils.exit_if_empty(selected, 'No items selected')
@@ -53,10 +53,10 @@ module CMUX
         cmlist = Utils.cm_config
         ssh_user, ssh_opt = Utils.cmux_ssh_config
 
-        cmds = hosts.map do |host|
-          h   = [LABEL, host].transpose.to_h
-          cmd = build_is_command(cmlist, h[:cm], h[:cl_secured], h[:hostname])
-          build_command(h, ssh_user, ssh_opt, cmd)
+        cmds = hosts.map do |h|
+          host = [LABEL, h].transpose.to_h
+          cmd  = build_is_command(cmlist, host[:cm], host[:cl], host[:hostname])
+          build_command(host, ssh_user, ssh_opt, cmd)
         end
 
         TmuxWindowSplitter.new(*cmds).process
@@ -75,17 +75,23 @@ module CMUX
       end
 
       # Build impala shell command
-      def build_is_command(list, cm, cl_secured, hostname)
-        if cl_secured == 'Y'
-          principal = list.dig(cm, 'service', 'impala', 'kerberos', 'principal')
-          if principal.nil?
-            msg = "#{cm}: 'service > impala > kerberos > principal'"
-            raise CMUXConfigError, msg
-          end
-          kinit = %(kinit #{principal};)
+      def build_is_command(list, cm, cl, hostname)
+        principal = get_principal(list, cm, cl)
+        if principal
+          %(kinit #{principal} && impala-shell -k -i #{hostname})
+        else
+          %(impala-shell -i #{hostname})
         end
+      end
 
-        %(#{kinit} impala-shell -i #{hostname})
+      # Retrieve keberos principal for this HBase cluster
+      def get_principal(list, cm, cl)
+        krb_enabled = CM.hadoop_kerberos_enabled?(cm, cl)
+        return unless krb_enabled
+        principal = list.dig(cm, 'service', 'impala', 'kerberos', 'principal')
+        return principal unless principal.nil?
+        msg = "#{cm}: 'service > impala > kerberos > principal'"
+        raise CMUXConfigError, msg
       end
 
       # Build command options

@@ -26,7 +26,7 @@ module CMUX
 
       private
 
-      LABEL = %I[cm cl_disp cl_secured cl].freeze
+      LABEL = %I[cm cl_disp cl].freeze
 
       # Select cluster(s) to run 'hbase-shell'
       def select_clusters(hosts)
@@ -45,7 +45,7 @@ module CMUX
         body   = hosts.select { |h| h[:role_stypes].include?('HM(A)') }
                       .map { |h| h.values_at(*LABEL) }
                       .sort_by { |e| e.map(&:djust) }
-        FMT.table(header: header, body: body, rjust: [2])
+        FMT.table(header: header, body: body)
       end
 
       # Run 'hbase-shell'
@@ -55,7 +55,7 @@ module CMUX
 
         cmds = clusters.map do |cluster|
           cl  = [LABEL, cluster].transpose.to_h
-          cmd = build_hs_command(cmlist, cl[:cm], cl[:cl_disp], cl[:cl_secured])
+          cmd = build_hs_command(cmlist, cl[:cm], cl[:cl], cl[:cl_disp])
           build_command(cl, ssh_user, ssh_opt, cmd)
         end
 
@@ -63,22 +63,24 @@ module CMUX
       end
 
       # Build hbase shell command
-      def build_hs_command(list, cm, cl_disp, cl_secured)
+      def build_hs_command(list, cm, cl, cl_disp)
         irbrc = "#{IRBRC} #{IRBRC_LOCAL}"
         cmd   = %(\"echo \"$(xxd -p <(cat #{irbrc} 2> /dev/null))\") +
                 %(| xxd -p -r | sed 's@xCLUSTERx@#{cl_disp}@g' > ~/.irbrc;)
-
-        if cl_secured == 'Y'
-          principal = list.dig(cm, 'service', 'hbase', 'kerberos', 'principal')
-          if principal.nil?
-            msg = "#{cm}: 'service > hbase > kerberos > principal'"
-            raise CMUXConfigError, msg
-          end
-          cmd += %( kinit #{principal};)
-        end
-
+        principal = get_principal(list, cm, cl)
+        cmd += %( kinit #{principal} &&) if principal
         cmd += %( HADOOP_USER_NAME=#{@opt[:user]}) if @opt[:user]
-        cmd += %( hbase shell\")
+        cmd +  %( hbase shell\")
+      end
+
+      # Retrieves keberos principal for this HBase cluster.
+      def get_principal(list, cm, cl)
+        krb_enabled = CM.hbase_kerberos_enabled?(cm, cl)
+        return unless krb_enabled
+        principal = list.dig(cm, 'service', 'hbase', 'kerberos', 'principal')
+        return principal unless principal.nil?
+        msg = "#{cm}: 'service > hbase > kerberos > principal'"
+        raise CMUXConfigError, msg
       end
 
       # Build command

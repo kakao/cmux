@@ -94,7 +94,6 @@ module CMUX
         puts "  Name     : #{host[:cl]}"
         puts "  Disp     : #{host[:cl_disp]}"
         puts "  CDH Ver  : #{host[:cdh_ver]}"
-        puts "  Secured? : #{host[:cl_secured]}"
       end
 
       # Print the details of roles

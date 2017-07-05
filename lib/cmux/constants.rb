@@ -24,7 +24,6 @@ module CMUX
     cl:           'Cluster',
     cl_disp:      'Cludera Display Name',
     cdh_ver:      'CDH Ver',
-    cl_secured:   'Secured',
     hosts:        'Hosts',
     hostid:       'HostID',
     hostname:     'Hostname',

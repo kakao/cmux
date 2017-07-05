@@ -28,8 +28,7 @@ module CMUX
 
       private
 
-      LABEL     = %I[cm cm_ver cm_api_ver cl cl_disp cdh_ver cl_secured hosts]
-                  .freeze
+      LABEL     = %I[cm cm_ver cm_api_ver cl cl_disp cdh_ver hosts].freeze
       LABEL_PRV = %I[hostname role_stypes].freeze
 
       # Select cluster(s) to print
@@ -47,22 +46,13 @@ module CMUX
         selected.map(&:split)
       end
 
-      # Print cluster list
-      def print_list(clusters)
-        title  = "Cluster(s):\n\n"
-        header = TABLE_HEADERS.values_at(*LABEL)
-        table  = FMT.table(header: header, body: clusters, rjust: [2, 6, 7])
-        cnt    = clusters.map { |e| e.last.to_i }.reduce(:+)
-        footer = '-' * table[0].size, cnt.to_s.rjust(table[0].size)
-        puts title, table, footer
-      end
 
       # build CMUX table
       def build_cluster_table(clusters)
         header = TABLE_HEADERS.values_at(*LABEL)
         body   = clusters.map { |c| c.values_at(*LABEL) }
                          .sort_by { |c| c.map(&:djust) }
-        FMT.table(header: header, body: body, rjust: [2, 6, 7])
+        FMT.table(header: header, body: body, rjust: [1, 2, 5, 6])
       end
 
       # Print preview
@@ -80,6 +70,16 @@ module CMUX
       # Select hosts to preview
       def select_preview_hosts(cm, cl)
         CM.hosts.select { |h| h[:cm] == cm && h[:cl] == cl }
+      end
+
+      # Print cluster list.
+      def print_list(clusters)
+        title  = "Cluster(s):\n\n"
+        header = TABLE_HEADERS.values_at(*LABEL)
+        table  = FMT.table(header: header, body: clusters, rjust: [1, 2, 5, 6])
+        cnt    = clusters.map { |e| e.last.to_i }.reduce(:+)
+        footer = '-' * table[0].size, cnt.to_s.rjust(table[0].size)
+        puts title, table, footer
       end
 
       # Check command options

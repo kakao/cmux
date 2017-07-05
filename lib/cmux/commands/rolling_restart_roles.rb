@@ -22,19 +22,17 @@ module CMUX
 
       private
 
-      LABEL = %I[cm cl cl_disp serviceType roleType cdh_ver serviceName
-                 cl_secured].freeze
+      LABEL = %I[cm cl cl_disp serviceType roleType cdh_ver serviceName].freeze
 
       # Select role type to rolling restart
       def select_role_type
         cm, cl = select_cl('ROLLING RESTART ROLES').values_at(0, 1)
-
         title  = "ROLLING RESTART ROLES\n" \
                  "  * Cloudera Manager : #{cm}\n\n" \
                  "Select the ROLE TYPE :\n".red
         hosts  = CM.hosts(cm).select { |host| host[:cl] == cl }
         table  = build_role_type_table(hosts)
-        fzfopt = "+m --with-nth=3..-4 --header='#{title}' --no-clear"
+        fzfopt = "+m --with-nth=3..-3 --header='#{title}' --no-clear"
 
         selected = Utils.fzf(list: table, opt: fzfopt)
         Utils.exit_if_empty(selected, 'No items selected')
@@ -129,12 +127,12 @@ module CMUX
 
       # Print selected roles
       def print_the_selection(role_type, roles)
-        cm, cl, cl_disp, s_type, r_type, cdh_ver, service, secured = role_type
+        cm, cl, cl_disp, s_type, r_type, cdh_ver, service = role_type
 
         puts 'ROLLING RESTART ROLES'.red
         FMT.horizonal_splitter('-')
 
-        print_cluster(cm, cl, cl_disp, cdh_ver, secured)
+        print_cluster(cm, cl, cl_disp, cdh_ver)
         print_service(s_type, service)
         print_hbase_manager(cm, cl, cdh_ver)
         print_role_type(r_type)

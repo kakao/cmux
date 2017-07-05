@@ -26,7 +26,7 @@ module CMUX
 
       private
 
-      LABEL = %I[cm cl_disp cdh_ver cl_secured cl].freeze
+      LABEL = %I[cm cl_disp cdh_ver cl].freeze
 
       # Select cluster(s) to run 'hbase-table-stat'
       def select_clusters(hosts)
@@ -45,7 +45,7 @@ module CMUX
         body   = hosts.select { |h| h[:role_stypes].include?('HM(A)') }
                       .map { |h| h.values_at(*LABEL) }
                       .sort_by { |e| e.map(&:djust) }
-        FMT.table(header: header, body: body, rjust: [2, 3, 4])
+        FMT.table(header: header, body: body, rjust: [2])
       end
 
       # Run 'hbase-table-stat'
@@ -63,7 +63,7 @@ module CMUX
         hduser = "HADOOP_USER_NAME=#{@opt[:user]}" if @opt[:user]
         hts = Utils.ht4cdh(tool: 'hbase-table-stat', cdh_ver: cluster[:cdh_ver])
         zk  = CM.zk_leader(cluster[:cm], cluster[:cl])
-        opt = build_hts_opts(cluster[:cm], cluster[:cl_secured])
+        opt = build_hts_opts(cluster[:cm], cluster[:cl])
         "#{banner} #{hduser} java -jar #{HT_HOME}/#{hts} #{zk} #{opt}"
       end
 
@@ -74,9 +74,10 @@ module CMUX
       end
 
       # Build 'hbase-table-stat' options
-      def build_hts_opts(cm, secured)
+      def build_hts_opts(cm, cl)
+        krb_enabled = CM.hbase_kerberos_enabled?(cm, cl)
         opt = "--interval #{@opt[:interval]}"
-        opt += Utils.gen_krb_opt_for_ht(cm) if secured == 'Y'
+        opt += Utils.gen_krb_opt_for_ht(cm) if krb_enabled
         opt
       end
 

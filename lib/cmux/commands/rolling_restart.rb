@@ -14,7 +14,7 @@ module CMUX
         Utils.do_if_sync(@opt[:sync])
       end
 
-      LABEL = %I[cm cl cl_disp cdh_ver cl_secured hosts].freeze
+      LABEL = %I[cm cl cl_disp cdh_ver hosts].freeze
 
       # Check to continue
       def continue?(message)
@@ -29,7 +29,7 @@ module CMUX
         header = TABLE_HEADERS.values_at(*LABEL)
         body   = CM.clusters(cm).map { |c| c.values_at(*LABEL) }
                    .sort_by { |c| c.map(&:djust) }
-        table  = FMT.table(header: header, body: body, rjust: [3, 4, 5])
+        table  = FMT.table(header: header, body: body, rjust: [3, 4])
         fzfopt = "+m --header='#{title}' --no-clear"
 
         selected = Utils.fzf(list: table, opt: fzfopt)
@@ -44,14 +44,13 @@ module CMUX
       end
 
       # Print cluster
-      def print_cluster(cm, cl, cl_disp, cdh_ver, secured)
+      def print_cluster(cm, cl, cl_disp, cdh_ver)
         print_format = " * %-16s : %s\n"
         printf print_format, 'Cloudera Manager', cm
         printf print_format, 'Cluster', "[#{cl}] #{cl_disp}"
 
         print_format = "   %16s : %s\n"
         printf print_format, '    CDH Version', cdh_ver
-        printf print_format, '    Secured    ', secured
       end
 
       # Print service
@@ -184,7 +183,7 @@ module CMUX
 
         case role_type
         when 'REGIONSERVER'
-          Utils.empty_rs(hostname, @exp_file, @hm_opts)
+          Utils.empty_rs(cm, cl, hostname, @exp_file, @hm_opts)
         when 'NAMENODE'
           nns = CM.nameservices_assigned_nn(cm, cl, role)
           nns.each { |nn| CM.failover_nn(cm, cl, role, nn) }
@@ -195,7 +194,7 @@ module CMUX
       def after_restart_role(cm, cl, hostname, role_type, role)
         case role_type
         when 'REGIONSERVER'
-          Utils.import_rs(hostname, @exp_file, @hm_opts)
+          Utils.import_rs(cm, cl, hostname, @exp_file, @hm_opts)
         when 'JOURNALNODE'
           CM.hdfs_role_edits(cm, cl, role)
         when *CHK_RTYPES

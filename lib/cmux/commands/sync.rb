@@ -20,7 +20,6 @@ module CMUX
         @hosts      = Utils.new_rec_hash
         @roles      = Utils.new_rec_hash
         @services   = Utils.new_rec_hash
-        @principals = Utils.new_rec_hash
       end
 
       # Run command
@@ -50,7 +49,6 @@ module CMUX
         services(cm, api_base_url, user, password)
         roles(cm, api_base_url, user, password)
         cl_hosts(cm, api_base_url, user, password)
-        secure_cluster?(cm)
       end
 
       # Write CMUX data to file
@@ -72,22 +70,9 @@ module CMUX
 
       # Parallel Sync
       def psync(cm, api_base_url, user, password)
-        %w[cm_kerberos_principals clusters hosts cms_roles].pmap do |func|
+        %w[clusters hosts cms_roles].pmap do |func|
           send func, cm, api_base_url, user, password
         end
-      end
-
-      # The Kerberos principals needed by the services being managed
-      # by Cloudera Manager
-      def cm_kerberos_principals(cm, api_base_url, user, password)
-        url  = "#{api_base_url}/cm/kerberosPrincipals"
-        res  = API.get_req(url: url, user: user, password: password,
-                           sym_name: true)
-        item = res[:items].select { |e| e.include?('zookeeper') }
-
-        @principals[cm] = item.map { |e| e.split('/').last.split('@').first }
-      rescue StandardError => e
-        raise CMAPIError, "#{cm}: #{e.message}", e.backtrace
       end
 
       # Clusters
@@ -286,20 +271,6 @@ module CMUX
       def delete_temp_host(cm, host)
         @hosts.dig(cm, :hosts).delete(host)
         @hosts.delete(cm) if @hosts.dig(cm, :hosts).empty?
-      end
-
-      # Check whether secure cluster
-      def secure_cluster?(cm)
-        @cmux_data.dig(cm, :cl).pmap do |cl, cl_props|
-          cl_props[:hosts].values.map do |host_props|
-            if @principals[cm].include?(host_props[:hostname])
-              @cmux_data.dig(cm, :cl, cl)[:isSecured] = true
-              break
-            else
-              @cmux_data.dig(cm, :cl, cl)[:isSecured] = false
-            end
-          end
-        end
       end
 
       # Host are not registed in any clusters

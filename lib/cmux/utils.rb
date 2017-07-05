@@ -95,6 +95,52 @@ module CMUX
         Dir.entries(HT_HOME).find { |e| e.match(/^#{pattern}/) }
       end
 
+      # Generate kerberos options for hbase-tools.
+      def gen_krb_opt_for_ht(cm)
+        krb5conf, keytab, principal = chk_krb_opt(cm, 'hbase')
+        " --principal=#{principal} --keytab=#{keytab} --krbconf=#{krb5conf}"
+      end
+
+      # Make hbase-region-inspector configuration files.
+      def gen_krb_opt_for_hri(cm, zk)
+        krb5conf, keytab, principal = chk_krb_opt(cm, 'hbase')
+
+        rand_name       = SecureRandom.hex
+        jass_conf       = %(/tmp/#{rand_name}-jass.conf)
+        properties      = %(/tmp/#{rand_name}.properties)
+        default_realm   = CM.security_realm(cm)
+        hbase_principal = %(#{principal}/_HOST@#{default_realm})
+
+        make_jass_conf(jass_conf, keytab, principal)
+        make_properties(properties, zk, hbase_principal, krb5conf, jass_conf)
+        properties
+      end
+
+      # Make hbase-region-inspector JAAS login configuration file.
+      def make_jass_conf(file_name, keytab, principal)
+        str = %(Client {\n) +
+              %(  com.sun.security.auth.module.Krb5LoginModule required\n) +
+              %(  useTicketCache=false\n) +
+              %(  useKeyTab=true\n) +
+              %(  keyTab="#{keytab}"\n) +
+              %(  principal="#{principal}";\n};)
+        File.open(file_name, 'w') { |file| file.write str }
+      end
+
+      # Make hbase-region-inspector properties file.
+      def make_properties(*args)
+        file_name, zk, hbase_principal, krb5conf, jass_conf = args
+        str = %(hbase.zookeeper.quorum = #{zk}\n) +
+              %(hbase.zookeeper.property.clientPort = 2181\n) +
+              %(hadoop.security.authentication = kerberos\n) +
+              %(hbase.security.authentication = kerberos\n) +
+              %(hbase.master.kerberos.principal = #{hbase_principal}\n) +
+              %(hbase.regionserver.kerberos.principal = #{hbase_principal}\n) +
+              %(java.security.krb5.conf = #{krb5conf}\n) +
+              %(java.security.auth.login.config = #{jass_conf}\n)
+        File.open(file_name, 'w') { |file| file.write str }
+      end
+
       # Open URL in default web browser
       def open_url(url)
         if RbConfig::CONFIG['host_os'] =~ /darwin/
@@ -240,63 +286,21 @@ module CMUX
         [krb5conf, keytab, principal]
       end
 
-      # Generate kerberos options for 'hbase-tools'
-      def gen_krb_opt_for_ht(cm)
-        krb5conf, keytab, principal = chk_krb_opt(cm, 'hbase')
-        " --principal=#{principal} --keytab=#{keytab} --krbconf=#{krb5conf}"
-      end
-
-      # Generate kerberos options for 'hbase-region-inspector'
-      def gen_krb_opt_for_hri(cm, zk)
-        krb5conf, keytab, principal = chk_krb_opt(cm, 'hbase')
-
-        zk_port = 2181
-        rand_name = SecureRandom.hex
-        jass_conf  = %(/tmp/#{rand_name}-jass.conf)
-        properties = %(/tmp/#{rand_name}.properties)
-
-        dft_realm = File.readlines(krb5conf).grep(/default_realm/)
-                        .last.split('=').last.chomp.strip
-
-        hbase_pricipal = %(#{principal}/_HOST@#{dft_realm})
-
-        jass_conf_str =
-          %(Client {\n) +
-          %(  com.sun.security.auth.module.Krb5LoginModule required\n) +
-          %(  useTicketCache=false\n) +
-          %(  useKeyTab=true\n) +
-          %(  keyTab="#{keytab}"\n) +
-          %(  principal="#{principal}";\n};)
-
-        properties_str =
-          %(# Zookeeper quorum\n) +
-          %(hbase.zookeeper.quorum = #{zk}\n) +
-          %(hbase.zookeeper.property.clientPort = #{zk_port}\n) +
-          %(\n# Secured cluster\n) +
-          %(hadoop.security.authentication = kerberos\n) +
-          %(hbase.security.authentication = kerberos\n) +
-          %(hbase.master.kerberos.principal = #{hbase_pricipal}\n) +
-          %(hbase.regionserver.kerberos.principal = #{hbase_pricipal}\n) +
-          %(java.security.krb5.conf = #{krb5conf}\n) +
-          %(java.security.auth.login.config = #{jass_conf}\n)
-
-        File.open(jass_conf, 'w') { |file| file.write jass_conf_str }
-        File.open(properties, 'w') { |file| file.write properties_str }
-
-        properties
-      end
-
       # [hbase-manager] Change the auto balancer status
       def set_auto_balancer(cm, cl, onoff)
-        zk   = CM.zk_leader(cm, cl)
-        host = CM.hosts.find { |h| h[:cm] == cm && h[:cl] == cl }
-        hm   = ht4cdh(tool: 'hbase-manager', cdh_ver: host[:cdh_ver])
-        opt  = gen_krb_opt_for_ht(cm) if host[:cl_secured] == 'Y'
-        cmd  = "java -jar #{HT_HOME}/#{hm}" \
-               " assign #{zk} balancer #{onoff} #{opt}" \
-               ' | tail -1'
+        zk_info     = CM.find_zk_leader(cm, cl)
+        zk          = zk_info[:hostname]
+        cdh_ver     = zk_info[:cdh_ver]
+        hm          = ht4cdh(tool: 'hbase-manager', cdh_ver: cdh_ver)
+        krb_enabled = CM.hbase_kerberos_enabled?(cm, cl)
+        opt         = gen_krb_opt_for_ht(cm) if krb_enabled
+        cmd         = "java -jar #{HT_HOME}/#{hm}" \
+                      " assign #{zk} balancer #{onoff} #{opt}" \
+                      ' | tail -1'
+
         msg = onoff ? 'Enabling auto balancer' : 'Disabling auto balancer'
         Formatter.puts_str(msg.red, true)
+
         msg = cmd.wrap(console_col_size - 26, "\n" + ' ' * 26)
         Formatter.puts_str("  └── #{msg}", true)
 
@@ -320,12 +324,15 @@ module CMUX
         msg = 'Export assignment of all Regions'.red
         Formatter.puts_str(msg.red, true)
 
-        zk   = CM.zk_leader(cm, cl)
-        host = CM.hosts.find { |h| h[:cm] == cm && h[:cl] == cl }
-        hm   = ht4cdh(tool: 'hbase-manager', cdh_ver: host[:cdh_ver])
-        opt  = gen_krb_opt_for_ht(cm) if host[:cl_secured] == 'Y'
-        cmd  = "java -jar #{HT_HOME}/#{hm} assign #{zk} export" \
-               " #{exp_file} #{opt}"
+        zk_info     = CM.find_zk_leader(cm, cl)
+        zk          = zk_info[:hostname]
+        cdh_ver     = zk_info[:cdh_ver]
+        hm          = ht4cdh(tool: 'hbase-manager', cdh_ver: cdh_ver)
+        krb_enabled = CM.hbase_kerberos_enabled?(cm, cl)
+        opt         = gen_krb_opt_for_ht(cm) if krb_enabled
+        cmd         = "java -jar #{HT_HOME}/#{hm} assign #{zk} export" \
+                      " #{exp_file} #{opt}"
+
         msg = cmd.wrap(console_col_size - 26, "\n" + ' ' * 26)
         Formatter.puts_str("  └── #{msg}", true)
 
@@ -334,7 +341,7 @@ module CMUX
       end
 
       # [hbase-manager] Import assignment of regions from the file
-      def import_rs(hostname, exp_file, opts)
+      def import_rs(cm, cl, hostname, exp_file, opts)
         msg = 'Import assignment of Regions'.red
         Formatter.puts_str(msg, true)
 
@@ -346,20 +353,23 @@ module CMUX
         end
 
         if res
-          rs   = res.split('/').first
-          host = CM.hosts.find { |h| h[:hostname] == hostname }
-          zk   = CM.zk_leader(host[:cm], host[:cl])
-          hm   = ht4cdh(tool: 'hbase-manager', cdh_ver: host[:cdh_ver])
-          opt  = opts
-          opt << gen_krb_opt_for_ht(host[:cm]) if host[:cl_secured] == 'Y'
+
+          rs          = res.split('/').first
+          zk_info     = CM.find_zk_leader(cm, cl)
+          zk          = zk_info[:hostname]
+          cdh_ver     = zk_info[:cdh_ver]
+          hm          = ht4cdh(tool: 'hbase-manager', cdh_ver: cdh_ver)
+          krb_enabled = CM.hbase_kerberos_enabled?(cm, cl)
+          opt = opts
+          opt += gen_krb_opt_for_ht(cm) if krb_enabled
           cmd = "java -jar #{HT_HOME}/#{hm} assign #{zk}" \
                 " import #{exp_file} --rs=#{rs} #{opt}"
+
           msg = cmd.wrap(console_col_size - 26, "\n" + ' ' * 26)
           Formatter.puts_str("  └── #{msg}", true)
 
           res = system cmd
-          msg = "[#{hostname}] #{rs}"
-          raise CMUXHBaseToolImportRSError, msg unless res
+          raise CMUXHBaseToolImportRSError, "[#{hostname}] #{rs}" unless res
         else
           msg = "  └── #{'Do nothing.'.green} " \
                 'This RegionServer is already empty.'
@@ -368,7 +378,7 @@ module CMUX
       end
 
       # [hbase-manager] Move all Regions to other RegionServers
-      def empty_rs(hostname, exp_file, opts)
+      def empty_rs(cm, cl, hostname, exp_file, opts)
         msg = 'Move all Regions other RegionServers.'.red
         Formatter.puts_str(msg, true)
 
@@ -380,18 +390,21 @@ module CMUX
         end
 
         if res
-          rs   = res.split('/').first
-          host = CM.hosts.find { |h| h[:hostname] == hostname }
-          zk   = CM.zk_leader(host[:cm], host[:cl])
-          hm   = ht4cdh(tool: 'hbase-manager', cdh_ver: host[:cdh_ver])
-          opt  = "--skip-export #{opts}"
-          opt << gen_krb_opt_for_ht(host[:cm]) if host[:cl_secured] == 'Y'
+          rs          = res.split('/').first
+          zk_info     = CM.find_zk_leader(cm, cl)
+          zk          = zk_info[:hostname]
+          cdh_ver     = zk_info[:cdh_ver]
+          hm          = ht4cdh(tool: 'hbase-manager', cdh_ver: cdh_ver)
+          krb_enabled = CM.hbase_kerberos_enabled?(cm, cl)
+          opt = "--skip-export #{opts}"
+          opt += gen_krb_opt_for_ht(cm) if krb_enabled
           cmd = "java -jar #{HT_HOME}/#{hm} assign #{zk} empty #{rs} #{opt}"
+
           msg = cmd.wrap(console_col_size - 26, "\n" + ' ' * 26)
           Formatter.puts_str("  └── #{msg}", true)
+
           res = system cmd
-          msg = "[#{hostname}] #{rs}"
-          raise CMUXHBaseToolEmptyRSError, msg unless res
+          raise CMUXHBaseToolEmptyRSError, "[#{hostname}] #{rs}" unless res
         else
           msg = "  └── #{'This RegionServer is already empty.'.green}"
           Formatter.puts_str(msg, true)
