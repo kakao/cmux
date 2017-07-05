@@ -102,7 +102,7 @@ module CMUX
       end
 
       # Make hbase-region-inspector configuration files.
-      def gen_krb_opt_for_hri(cm, zk)
+      def gen_krb_opt_for_hri(cm, zk, zk_port)
         krb5conf, keytab, principal = chk_krb_opt(cm, 'hbase')
 
         rand_name       = SecureRandom.hex
@@ -112,7 +112,8 @@ module CMUX
         hbase_principal = %(#{principal}/_HOST@#{default_realm})
 
         make_jass_conf(jass_conf, keytab, principal)
-        make_properties(properties, zk, hbase_principal, krb5conf, jass_conf)
+        make_properties(properties, zk, zk_port, hbase_principal,
+                        krb5conf, jass_conf)
         properties
       end
 
@@ -129,9 +130,9 @@ module CMUX
 
       # Make hbase-region-inspector properties file.
       def make_properties(*args)
-        file_name, zk, hbase_principal, krb5conf, jass_conf = args
+        file_name, zk, zk_port, hbase_principal, krb5conf, jass_conf = args
         str = %(hbase.zookeeper.quorum = #{zk}\n) +
-              %(hbase.zookeeper.property.clientPort = 2181\n) +
+              %(hbase.zookeeper.property.clientPort = #{zk_port}\n) +
               %(hadoop.security.authentication = kerberos\n) +
               %(hbase.security.authentication = kerberos\n) +
               %(hbase.master.kerberos.principal = #{hbase_principal}\n) +
@@ -288,15 +289,17 @@ module CMUX
 
       # [hbase-manager] Change the auto balancer status
       def set_auto_balancer(cm, cl, onoff)
-        zk_info     = CM.find_zk_leader(cm, cl)
-        zk          = zk_info[:hostname]
-        cdh_ver     = zk_info[:cdh_ver]
-        hm          = ht4cdh(tool: 'hbase-manager', cdh_ver: cdh_ver)
-        krb_enabled = CM.hbase_kerberos_enabled?(cm, cl)
-        opt         = gen_krb_opt_for_ht(cm) if krb_enabled
-        cmd         = "java -jar #{HT_HOME}/#{hm}" \
-                      " assign #{zk} balancer #{onoff} #{opt}" \
-                      ' | tail -1'
+        zk_leader     = CM.find_zk_leader(cm, cl)
+        zk            = zk_leader[:hostname]
+        zk_port       = CM.zk_port(cm, cl, zk_leader)
+        cdh_ver       = zk_leader[:cdh_ver]
+        hbase_manager = ht4cdh(tool: 'hbase-manager', cdh_ver: cdh_ver)
+        krb_enabled   = CM.hbase_kerberos_enabled?(cm, cl)
+        opt           = gen_krb_opt_for_ht(cm) if krb_enabled
+
+        cmd = "java -jar #{HT_HOME}/#{hbase_manager}" \
+              " assign #{zk}:#{zk_port} balancer #{onoff} #{opt}" \
+              ' | tail -1'
 
         msg = onoff ? 'Enabling auto balancer' : 'Disabling auto balancer'
         Formatter.puts_str(msg.red, true)
@@ -324,14 +327,16 @@ module CMUX
         msg = 'Export assignment of all Regions'.red
         Formatter.puts_str(msg.red, true)
 
-        zk_info     = CM.find_zk_leader(cm, cl)
-        zk          = zk_info[:hostname]
-        cdh_ver     = zk_info[:cdh_ver]
-        hm          = ht4cdh(tool: 'hbase-manager', cdh_ver: cdh_ver)
-        krb_enabled = CM.hbase_kerberos_enabled?(cm, cl)
-        opt         = gen_krb_opt_for_ht(cm) if krb_enabled
-        cmd         = "java -jar #{HT_HOME}/#{hm} assign #{zk} export" \
-                      " #{exp_file} #{opt}"
+        zk_leader     = CM.find_zk_leader(cm, cl)
+        zk            = zk_leader[:hostname]
+        zk_port       = CM.zk_port(cm, cl, zk_leader)
+        cdh_ver       = zk_leader[:cdh_ver]
+        hbase_manager = ht4cdh(tool: 'hbase-manager', cdh_ver: cdh_ver)
+        krb_enabled   = CM.hbase_kerberos_enabled?(cm, cl)
+        opt           = gen_krb_opt_for_ht(cm) if krb_enabled
+
+        cmd = "java -jar #{HT_HOME}/#{hbase_manager}" \
+              " assign #{zk}:#{zk_port} export #{exp_file} #{opt}"
 
         msg = cmd.wrap(console_col_size - 26, "\n" + ' ' * 26)
         Formatter.puts_str("  └── #{msg}", true)
@@ -353,17 +358,17 @@ module CMUX
         end
 
         if res
-
-          rs          = res.split('/').first
-          zk_info     = CM.find_zk_leader(cm, cl)
-          zk          = zk_info[:hostname]
-          cdh_ver     = zk_info[:cdh_ver]
-          hm          = ht4cdh(tool: 'hbase-manager', cdh_ver: cdh_ver)
-          krb_enabled = CM.hbase_kerberos_enabled?(cm, cl)
+          rs            = res.split('/').first
+          zk_leader     = CM.find_zk_leader(cm, cl)
+          zk            = zk_leader[:hostname]
+          zk_port       = CM.zk_port(cm, cl, zk_leader)
+          cdh_ver       = zk_leader[:cdh_ver]
+          hbase_manager = ht4cdh(tool: 'hbase-manager', cdh_ver: cdh_ver)
+          krb_enabled   = CM.hbase_kerberos_enabled?(cm, cl)
           opt = opts
           opt += gen_krb_opt_for_ht(cm) if krb_enabled
-          cmd = "java -jar #{HT_HOME}/#{hm} assign #{zk}" \
-                " import #{exp_file} --rs=#{rs} #{opt}"
+          cmd = "java -jar #{HT_HOME}/#{hbase_manager}" \
+                " assign #{zk}:#{zk_port} import #{exp_file} --rs=#{rs} #{opt}"
 
           msg = cmd.wrap(console_col_size - 26, "\n" + ' ' * 26)
           Formatter.puts_str("  └── #{msg}", true)
@@ -390,15 +395,17 @@ module CMUX
         end
 
         if res
-          rs          = res.split('/').first
-          zk_info     = CM.find_zk_leader(cm, cl)
-          zk          = zk_info[:hostname]
-          cdh_ver     = zk_info[:cdh_ver]
-          hm          = ht4cdh(tool: 'hbase-manager', cdh_ver: cdh_ver)
-          krb_enabled = CM.hbase_kerberos_enabled?(cm, cl)
+          rs            = res.split('/').first
+          zk_leader     = CM.find_zk_leader(cm, cl)
+          zk            = zk_leader[:hostname]
+          zk_port       = CM.zk_port(cm, cl, zk_leader)
+          cdh_ver       = zk_leader[:cdh_ver]
+          hbase_manager = ht4cdh(tool: 'hbase-manager', cdh_ver: cdh_ver)
+          krb_enabled   = CM.hbase_kerberos_enabled?(cm, cl)
           opt = "--skip-export #{opts}"
           opt += gen_krb_opt_for_ht(cm) if krb_enabled
-          cmd = "java -jar #{HT_HOME}/#{hm} assign #{zk} empty #{rs} #{opt}"
+          cmd = "java -jar #{HT_HOME}/#{hbase_manager}" \
+                " assign #{zk}:#{zk_port} empty #{rs} #{opt}"
 
           msg = cmd.wrap(console_col_size - 26, "\n" + ' ' * 26)
           Formatter.puts_str("  └── #{msg}", true)

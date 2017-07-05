@@ -62,9 +62,8 @@ module CMUX
         banner = build_banner(cluster[:cl_disp], cluster[:cdh_ver])
         hduser = "HADOOP_USER_NAME=#{@opt[:user]}" if @opt[:user]
         hts = Utils.ht4cdh(tool: 'hbase-table-stat', cdh_ver: cluster[:cdh_ver])
-        zk  = CM.zk_leader(cluster[:cm], cluster[:cl])
         opt = build_hts_opts(cluster[:cm], cluster[:cl])
-        "#{banner} #{hduser} java -jar #{HT_HOME}/#{hts} #{zk} #{opt}"
+        "#{banner} #{hduser} java -jar #{HT_HOME}/#{hts} #{opt}"
       end
 
       # Build login banner
@@ -75,8 +74,12 @@ module CMUX
 
       # Build 'hbase-table-stat' options
       def build_hts_opts(cm, cl)
+        zk_leader   = CM.find_zk_leader(cm, cl)
+        zk          = zk_leader[:hostname]
+        zk_port     = CM.zk_port(cm, cl, zk_leader)
         krb_enabled = CM.hbase_kerberos_enabled?(cm, cl)
-        opt = "--interval #{@opt[:interval]}"
+
+        opt = "#{zk}:#{zk_port} --interval #{@opt[:interval]}"
         opt += Utils.gen_krb_opt_for_ht(cm) if krb_enabled
         opt
       end

@@ -72,13 +72,15 @@ module CMUX
         Utils.login_banner(msg)
       end
 
-      # Build 'hbase-region-inspector' options
       def build_hri_opts(cm, cl)
         build_hri_port_number
-        zk          = CM.zk_leader(cm, cl)
+
+        zk_leader   = CM.find_zk_leader(cm, cl)
+        zk          = zk_leader[:hostname]
+        zk_port     = CM.zk_port(cm, cl, zk_leader)
         krb_enabled = CM.hbase_kerberos_enabled?(cm, cl)
         krb_opt     = zk
-        krb_opt     = Utils.gen_krb_opt_for_hri(cm, zk) if krb_enabled
+        krb_opt     = Utils.gen_krb_opt_for_hri(cm, zk, zk_port) if krb_enabled
 
         "--admin #{krb_opt} #{@hri_port} #{@opt[:interval]}"
       end
