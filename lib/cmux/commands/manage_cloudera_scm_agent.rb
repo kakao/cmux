@@ -58,7 +58,7 @@ module CMUX
         ssh_user, ssh_opt = Utils.cmux_ssh_config
         ssh_opt = "#{ssh_opt} -T -o LogLevel=QUIET"
 
-        Utils.awaiter(message: 'Processing  ') do
+        Utils.awaiter(msg: 'Processing  ', newline: true) do
           hosts.pmap do |host|
             h      = [LABEL, host].transpose.to_h
             banner = "[#{h[:cm]}] #{h[:cl_disp]} - #{h[:hostname]}"

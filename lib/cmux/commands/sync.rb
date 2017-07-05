@@ -24,7 +24,7 @@ module CMUX
 
       # Run command
       def process
-        Utils.awaiter(message: 'Fetching CM API resources  ') do
+        Utils.awaiter(msg: 'Fetching CM API resources  ', newline: true) do
           @cmlist.pmap do |cm, cm_props|
             user     = cm_props['user']
             password = cm_props['password']

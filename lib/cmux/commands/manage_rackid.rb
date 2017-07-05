@@ -94,7 +94,7 @@ module CMUX
 
       # Build CMUX table
       def build_dtable(list, header)
-        Utils.awaiter(message: 'Loading  ', smcup: true) do
+        Utils.awaiter(msg: 'Loading  ', smcup: true, newline: true) do
           body = list.map do |e|
             CM.hosts.map do |h|
               [h[:cm], h[:cl], h[:rackid]].eql?(e.values_at(0, 1, 3)) || next

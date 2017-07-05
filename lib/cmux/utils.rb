@@ -204,19 +204,20 @@ module CMUX
       # Wait for this thread to finish
       def awaiter(args = {})
         args[:smcup] && tput_smcup
-        thr = if args[:message]
+        thr = if args[:msg]
                 Thread.new do
-                  print args[:message].red
                   (1..4).cycle.each do |i|
-                    print "\b#{SPIN[i % 4].red}"
-                    sleep 0.5
+                    print "\r"
+                    print "#{FMT.cur_dt} " if args[:time]
+                    print "#{args[:msg].red}\b#{SPIN[i % 4].red}"
+                    sleep 1
                   end
                 end
               end
         yield
       ensure
         thr && thr.kill
-        puts
+        puts if args[:newline]
       end
 
       # Run sync command if you submit
