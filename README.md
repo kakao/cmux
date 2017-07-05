@@ -78,12 +78,12 @@ cm2.kakao.cmux:
       kerberos:
         krb5.conf: ~/cmux/config/cm1_krb5.conf
         keytab:    ~/cmux/config/cm1-hbase.keytab
-        principal: hbase
+        principal: hbase  # principal primary
     impala:
       kerberos:
         krb5.conf: ~/cmux/config/cm1_krb5.conf
         keytab:    ~/cmux/config/cm1-impala.keytab
-        principal: impala
+        principal: impala # princiapl primary
 ```
 
 ## After the installation
