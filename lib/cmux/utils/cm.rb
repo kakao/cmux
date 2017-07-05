@@ -235,7 +235,7 @@ module CMUX
             sleep 1
           end
           puts "\b "
-          FMT.puts_str("  └── #{'OK'.green} #{status}", true)
+          FMT.puts_str("└── #{'OK'.green} #{status}", true)
         end
 
         # Change the maintenance mode status of the role
