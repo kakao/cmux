@@ -100,7 +100,6 @@ module CMUX
         role_type = 'REGIONSERVER' if include_rs?(hosts)
         prepare_rolling_restart_for_rs(cm, cl, role_type)
         run_rolling_restart(hosts, cm, cl)
-      ensure
         finish_rolling_restart(cm, cl, role_type)
       end
 

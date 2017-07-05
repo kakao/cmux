@@ -159,7 +159,6 @@ module CMUX
             Utils.exit_with_msg('STOPPED'.red, true)
           end
         end
-      ensure
         finish_rolling_restart(cm, cl, r_type)
       end
 
