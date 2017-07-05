@@ -60,10 +60,10 @@ module CMUX
 
       # The version of Cloudera Manager
       def cm_ver(cm, base_url, user, password)
-        url = "#{base_url}/api/v9/cm/version"
-        res = API.get_req(url: url, user: user, password: password,
-                          sym_name: true)
-        @cmux_data[cm].merge!(version: res[:version], cmUrl: base_url)
+        url     = "#{base_url}/api/v9/cm/version"
+        version = API.get_req(url: url, user: user, password: password,
+                              sym_name: true)[:version]
+        @cmux_data[cm].merge!(version: version, cmUrl: base_url)
       rescue StandardError => e
         raise CMAPIError, "#{cm}: #{e.message}", e.backtrace
       end
