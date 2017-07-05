@@ -22,6 +22,8 @@ module CMUX
   FMT = Utils::Formatter
   CHK = Utils::Checker
   API = Utils::ApiCaller
+  HRI = Utils::HBaseRegionInspector
+  HT  = Utils::HBaseTools
 
   # CMUX is a set of commands for managing CDH clusters
   # using Cloudera Manager REST API

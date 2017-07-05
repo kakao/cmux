@@ -62,7 +62,7 @@ module CMUX
       # Print 'hbase-manager'
       def print_hbase_manager(cm, cl, cdh_ver)
         zk = CM.zk_leader(cm, cl)
-        hbase_manager = Utils.ht4cdh(tool: 'hbase-manager', cdh_ver: cdh_ver)
+        hbase_manager = HT.ht4cdh(tool: 'hbase-manager', cdh_ver: cdh_ver)
 
         print_format = "   %16s : %s\n"
         printf print_format, '     Zookeeper  ', zk
@@ -140,17 +140,17 @@ module CMUX
       # Check whether to proceed with interactive mode
       def set_interactive_mode
         q = 'Do you want to proceed with INTERACTIVE MODE (y|n)? '
-        @interactive = CHK.yn?(q.cyan, true)
-        @hm_opts     = '--move-async'
-        @hm_opts.concat(' --force-proceed') unless @interactive
+        @interactive       = CHK.yn?(q.cyan, true)
+        @opt_hbase_manager = '--move-async'
+        @opt_hbase_manager.concat(' --force-proceed') unless @interactive
       end
 
       # Prepare to rolling restart for RegionServer
       def prepare_rolling_restart_for_rs(cm, cl, role_type)
         return unless role_type == 'REGIONSERVER'
-        Utils.turn_off_auto_balancer(cm, cl)
+        disable_hbase_balancer(cm, cl)
         @exp_file = %(/tmp/#{cm}_#{cl}_#{Time.new.strftime('%Y%m%d%H%M%S')}.exp)
-        Utils.export_rs(cm, cl, @exp_file)
+        export_rs(cm, cl, @exp_file)
       end
 
       # Print 'restart' message of the host
@@ -183,7 +183,7 @@ module CMUX
 
         case role_type
         when 'REGIONSERVER'
-          Utils.empty_rs(cm, cl, hostname, @exp_file, @hm_opts)
+          empty_rs(cm, cl, hostname, @exp_file, @opt_hbase_manager)
         when 'NAMENODE'
           nns = CM.nameservices_assigned_nn(cm, cl, role)
           nns.each { |nn| CM.failover_nn(cm, cl, role, nn) }
@@ -194,7 +194,7 @@ module CMUX
       def after_restart_role(cm, cl, hostname, role_type, role)
         case role_type
         when 'REGIONSERVER'
-          Utils.import_rs(cm, cl, hostname, @exp_file, @hm_opts)
+          import_rs(cm, cl, hostname, @exp_file, @opt_hbase_manager)
         when 'JOURNALNODE'
           CM.hdfs_role_edits(cm, cl, role)
         when *CHK_RTYPES
@@ -216,10 +216,83 @@ module CMUX
       def finish_rolling_restart(cm, cl, role_type)
         if role_type == 'REGIONSERVER'
           q = 'Do you want to turn on auto balancer (y|n)? '
-          Utils.turn_on_auto_balancer(cm, cl) if CHK.yn?(q.cyan, true)
+          enable_hbase_balancer(cm, cl) if CHK.yn?(q.cyan, true)
         end
 
         FMT.puts_str('Finish'.red, true)
+      end
+
+      # Disable HBase balancer.
+      def disable_hbase_balancer(cm, cl)
+        Utils.print_str_to_fit_pane('Disable HBase balancer'.red)
+
+        cmd = HT.gen_hbase_manager_balancer_command(cm, cl, false)
+        Utils.print_str_to_fit_pane("  └── #{cmd}")
+
+        out = HT.run_hbase_manager_balancer(cmd)
+        Utils.print_str_to_fit_pane(out.chomp.red)
+      rescue StandardError => e
+        raise CMUXHBaseToolBalancerError, e
+      end
+
+      # Enable HBase balancer.
+      def enable_hbase_balancer(cm, cl)
+        Utils.print_str_to_fit_pane('Enable HBase balancer'.red)
+
+        cmd = HT.gen_hbase_manager_balancer_command(cm, cl, true)
+        Utils.print_str_to_fit_pane("  └── #{cmd}")
+
+        out = HT.run_hbase_manager_balancer(cmd)
+        Utils.print_str_to_fit_pane(out.red)
+      end
+
+      # Export a assignment of all Regions to a specific file.
+      def export_rs(cm, cl, exp_file)
+        Utils.print_str_to_fit_pane('Export assignment of all Regions'.red)
+
+        cmd = HT.gen_hbase_manager_export_command(cm, cl, exp_file)
+        Utils.print_str_to_fit_pane("  └── #{cmd}")
+
+        Utils.awaiter(msg: 'Exporting  ', time: true) do
+          HT.run_hbase_manager_export(cmd)
+          puts "\r" + FMT.cur_dt + ' Exported    '.red
+        end
+      end
+
+      # Move all Regions to other RegionServers.
+      def empty_rs(cm, cl, hostname, exp_file, opt)
+        Utils.print_str_to_fit_pane('Move all Regions other RegionServers.'.red)
+
+        rs = HT.get_rs_from_exp_file(exp_file, hostname)
+
+        if rs
+          cmd = HT.gen_hbase_manager_empty_command(cm, cl, rs, opt)
+          Utils.print_str_to_fit_pane("  └── #{cmd}")
+          Utils.awaiter(msg: 'Moving  ', time: true) do
+            HT.run_hbase_manager_empty(cmd)
+            puts "\r" + FMT.cur_dt + ' Moved    '.red
+          end
+        else
+          Utils.print_str_to_fit_pane('  └── Empty RegionServer')
+        end
+      end
+
+      # Import a assignment of Regions from export file.
+      def import_rs(cm, cl, hostname, exp_file, opt)
+        Utils.print_str_to_fit_pane('Import assignment of Regions'.red)
+
+        rs = HT.get_rs_from_exp_file(exp_file, hostname)
+
+        if rs
+          cmd = HT.gen_hbase_manager_import_command(cm, cl, exp_file, rs, opt)
+          Utils.print_str_to_fit_pane("  └── #{cmd}")
+          Utils.awaiter(msg: 'Importing  ', time: true) do
+            HT.run_hbase_manager_import(cmd)
+            puts "\r" + FMT.cur_dt + ' Imported    '.red
+          end
+        else
+          Utils.print_str_to_fit_pane('  └── Empty RegionServer')
+        end
       end
     end
   end

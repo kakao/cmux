@@ -61,7 +61,7 @@ module CMUX
       # Build command
       def build_command(cluster)
         banner = build_banner(cluster[:cl_disp], cluster[:cdh_ver])
-        hri    = Utils.hri4cdh(cluster[:cdh_ver])
+        hri    = HRI.hri4cdh(cluster[:cdh_ver])
         opt    = build_hri_opts(cluster[:cm], cluster[:cl])
         "#{banner} #{HRI_HOME}/#{hri} #{opt}"
       end
@@ -72,6 +72,7 @@ module CMUX
         Utils.login_banner(msg)
       end
 
+      # Build hbase-region-inspector options
       def build_hri_opts(cm, cl)
         build_hri_port_number
 
@@ -80,7 +81,7 @@ module CMUX
         zk_port     = CM.zk_port(cm, cl, zk_leader)
         krb_enabled = CM.hbase_kerberos_enabled?(cm, cl)
         krb_opt     = zk
-        krb_opt     = Utils.gen_krb_opt_for_hri(cm, zk, zk_port) if krb_enabled
+        krb_opt     = HRI.gen_krb_opt(cm, zk, zk_port) if krb_enabled
 
         "--admin #{krb_opt} #{@hri_port} #{@opt[:interval]}"
       end
