@@ -47,14 +47,14 @@ module CMUX
     end
   end
 
-  # Raise when no principal is defined in the 'cm.yaml'
-  class CMUXNoPrincipalError < StandardError
+  # Raise when any configuration is not defined in th 'cm.yaml'
+  class CMUXConfigError < StandardError
     def initialize(msg = nil)
       @message = msg
     end
 
     def message
-      "A principal is not defined in '#{CM_LIST}' for this cluster"
+      "#{@message} must be configured in 'cm.yaml'. Please see the README."
     end
   end
 

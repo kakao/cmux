@@ -70,7 +70,10 @@ module CMUX
 
         if cl_secured == 'Y'
           principal = list.dig(cm, 'service', 'hbase', 'kerberos', 'principal')
-          raise CMUXNoPrincipalError if principal.nil?
+          if principal.nil?
+            msg = "#{cm}: 'service > hbase > kerberos > principal'"
+            raise CMUXConfigError, msg
+          end
           cmd += %( kinit #{principal};)
         end
 

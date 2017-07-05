@@ -78,7 +78,10 @@ module CMUX
       def build_is_command(list, cm, cl_secured, hostname)
         if cl_secured == 'Y'
           principal = list.dig(cm, 'service', 'impala', 'kerberos', 'principal')
-          raise CMUXNoPrincipalError if principal.nil?
+          if principal.nil?
+            msg = "#{cm}: 'service > impala > kerberos > principal'"
+            raise CMUXConfigError, msg
+          end
           kinit = %(kinit #{principal};)
         end
 
