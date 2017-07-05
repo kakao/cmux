@@ -1,13 +1,13 @@
 module CMUX
-  # CMUX utilities.
+  # CMUX utilities
   module Utils
     class << self
-      # Recursive hash.
+      # Recursive hash
       def new_rec_hash
         Hash.new { |h, k| h[k] = Hash.new(&h.default_proc) }
       end
 
-      # Create temporary file.
+      # Create temporary file
       def cr_tempfile(args)
         args.map do
           tf = Tempfile.new('cmux')
@@ -28,12 +28,12 @@ module CMUX
         system 'tput rmcup'
       end
 
-      # Return a column size of console.
+      # Return a column size of console
       def console_col_size
         IO.console.winsize[1]
       end
 
-      # Load data from the YAML file.
+      # Load data from the YAML file
       def load_yaml(args = {})
         file = File.read(args[:file] || CMUX_YAML)
         yaml = YAML.load(file)
@@ -44,17 +44,17 @@ module CMUX
         raise message.red
       end
 
-      # Load CMUX configuration.
+      # Load CMUX configuration
       def cmux_ssh_config
         load_yaml(file: CMUX_YAML, key: 'ssh').values_at('user', 'opt')
       end
 
-      # Load CMUX `tws` mode.
+      # Load CMUX 'tws' mode
       def cmux_tws_mode
         load_yaml(file: CMUX_YAML, key: 'tws_mode')
       end
 
-      # Load Cloudera Manager configurations.
+      # Load Cloudera Manager configurations
       def cm_config(cm = nil)
         cm_list = load_yaml(file: CM_LIST)
         cm_list.key?(cm) ? cm_list.select { |k, _| k == cm }[cm] : cm_list
@@ -62,7 +62,7 @@ module CMUX
         raise CMUXCMListError, "No such file #{CM_LIST}"
       end
 
-      # Run fzf.
+      # Run fzf
       def fzf(args = {})
         @smcup = true
         opt = '-m --reverse --inline-info -x --tiebreak=begin --header-lines=2'
@@ -73,14 +73,14 @@ module CMUX
         io.readlines.map(&:chomp)
       end
 
-      # Get the value of this version in this map.
+      # Get the value of this version in this map
       def version_map(map, version)
         map.lazy.find do |k, _|
           Gem::Version.new(version) >= Gem::Version.new(k)
         end.last
       end
 
-      # The hbase-region-inspector for this CDH version.
+      # The 'hbase-region-inspector' for this CDH version
       def hri4cdh(cdh_ver)
         hri_ver = version_map(CDH_HRI_VER_MAP, cdh_ver)
         pattern = 'hbase-region-inspector'
@@ -88,14 +88,14 @@ module CMUX
         hri_ver == 'cdh4' ? tools.last : tools.first
       end
 
-      # The hbase-tools for this CHD version.
+      # The 'hbase-tools' for this CHD version
       def ht4cdh(args = {})
         ht_ver  = version_map(CDH_HT_VER_MAP, args[:cdh_ver])
         pattern = "#{args[:tool]}-#{ht_ver}"
         Dir.entries(HT_HOME).find { |e| e.match(/^#{pattern}/) }
       end
 
-      # Open URL in default web browser.
+      # Open URL in default web browser
       def open_url(url)
         if RbConfig::CONFIG['host_os'] =~ /darwin/
           system %(open "#{url}")
@@ -106,7 +106,7 @@ module CMUX
         end
       end
 
-      # Make SSH login banner.
+      # Make SSH login banner
       def login_banner(msg)
         if `which boxes`.chomp.empty?
           %(#{C_B};echo "#{msg}";#{C_0};echo;)
@@ -115,14 +115,14 @@ module CMUX
         end
       end
 
-      # Setup bash custom prompt.
+      # Setup bash custom prompt
       def ps1(title)
         '"PS1=\"[\[\033[01;32m\]' +
           title +
           '\[\033[0m\]] \u@\h:\w \t> \" bash"'
       end
 
-      # Exit with message.
+      # Exit with message
       def exit_with_msg(*args)
         tput_rmcup
         Formatter.puts_str(*args)
@@ -134,7 +134,7 @@ module CMUX
         exit_with_msg(msg.red, false) if obj.nil? || obj.empty?
       end
 
-      # Q&A.
+      # Q&A
       def qna(*args)
         Formatter.print_str(*args)
         ans = $stdin.gets.chomp
@@ -144,7 +144,7 @@ module CMUX
         exit
       end
 
-      # Countdown.
+      # Countdown
       def countdown(interval)
         t = Time.new(0)
         interval.downto(0) do |sec|
@@ -154,7 +154,7 @@ module CMUX
         puts
       end
 
-      # Wait for this thread to finish.
+      # Wait for this thread to finish
       def awaiter(args = {})
         args[:smcup] && tput_smcup
         thr = if args[:message]
@@ -172,14 +172,14 @@ module CMUX
         puts
       end
 
-      # Run sync command if you submit.
+      # Run sync command if you submit
       def do_if_sync(sync)
         do_sync = -> { Commands::Sync.new('sync').process }
         sync && do_sync.call
         do_sync.call unless File.exist?(CMUX_DATA)
       end
 
-      # Convert CMUX alias to CMUX command.
+      # Convert CMUX alias to CMUX command
       def alias2cmd(cmd_alias)
         Commands::CMDS.find { |_, v| v[:alias] == cmd_alias }.first
       end
@@ -202,7 +202,7 @@ module CMUX
         exit
       end
 
-      # Print CMUX commands.
+      # Print CMUX commands
       def print_cmux_cmds
         cmds = Commands::CMDS.map do |k, v|
           [' ' * 4, k, v[:alias] || ' ', v[:desc] || ' ']
@@ -210,12 +210,12 @@ module CMUX
         puts Formatter.table(body: cmds)
       end
 
-      # Converts to an absolute pathname.
+      # Converts to an absolute pathname
       def to_absolute_path(file, dir_str)
         Pathname.new(file).absolute? ? file : File.expand_path(file, dir_str)
       end
 
-      # Check kerberos options.
+      # Check kerberos options
       def chk_krb_opt(cm, svc_type)
         conf = load_yaml(file: CM_LIST, key: cm)
 
@@ -240,13 +240,13 @@ module CMUX
         [krb5conf, keytab, principal]
       end
 
-      # Generate kerberos options for hbase-tools.
+      # Generate kerberos options for 'hbase-tools'
       def gen_krb_opt_for_ht(cm)
         krb5conf, keytab, principal = chk_krb_opt(cm, 'hbase')
         " --principal=#{principal} --keytab=#{keytab} --krbconf=#{krb5conf}"
       end
 
-      # Generate kerberos options for hbase-region-inspector.
+      # Generate kerberos options for 'hbase-region-inspector'
       def gen_krb_opt_for_hri(cm, zk)
         krb5conf, keytab, principal = chk_krb_opt(cm, 'hbase')
 
@@ -286,7 +286,7 @@ module CMUX
         properties
       end
 
-      # [hbase-manager] Change the auto balancer status.
+      # [hbase-manager] Change the auto balancer status
       def set_auto_balancer(cm, cl, onoff)
         zk   = CM.zk_leader(cm, cl)
         host = CM.hosts.find { |h| h[:cm] == cm && h[:cl] == cl }
@@ -305,17 +305,17 @@ module CMUX
         Formatter.puts_str("  └── #{out.chomp.green}", true)
       end
 
-      # [hbase-manager] Turn off the auto balancer.
+      # [hbase-manager] Turn off the auto balancer
       def turn_off_auto_balancer(cm, cl)
         set_auto_balancer(cm, cl, false)
       end
 
-      # [hbase-manager] Turn on the auto balancer.
+      # [hbase-manager] Turn on the auto balancer
       def turn_on_auto_balancer(cm, cl)
         set_auto_balancer(cm, cl, true)
       end
 
-      # [hbase-manager] Export assignment of all Regions to a file.
+      # [hbase-manager] Export assignment of all Regions to a file
       def export_rs(cm, cl, exp_file)
         msg = 'Export assignment of all Regions'.red
         Formatter.puts_str(msg.red, true)
@@ -333,7 +333,7 @@ module CMUX
         raise CMUXHBaseToolExportRSError, "\n#{err}" unless err.to_s.empty?
       end
 
-      # [hbase-manager] Import assignment of regions from the file.
+      # [hbase-manager] Import assignment of regions from the file
       def import_rs(hostname, exp_file, opts)
         msg = 'Import assignment of Regions'.red
         Formatter.puts_str(msg, true)
@@ -367,7 +367,7 @@ module CMUX
         end
       end
 
-      # [hbase-manager] Move all Regions to other RegionServers.
+      # [hbase-manager] Move all Regions to other RegionServers
       def empty_rs(hostname, exp_file, opts)
         msg = 'Move all Regions other RegionServers.'.red
         Formatter.puts_str(msg, true)

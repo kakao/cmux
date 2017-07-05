@@ -1,15 +1,15 @@
 module CMUX
   module Commands
-    # Open Service Web Console as the default browser.
+    # Open Service Web Console as the default browser
     class WebService
       extend Commands
 
-      # Command properties.
+      # Command properties
       CMD   = 'web-service'.freeze
       ALIAS = 'websvc'.freeze
       DESC  = 'Open Service Web Console as the default browser.'.freeze
 
-      # Regist command.
+      # Regist command
       reg_cmd(cmd: CMD, alias: ALIAS, desc: DESC)
 
       # Initialize
@@ -17,7 +17,7 @@ module CMUX
         @opt = build_opts
       end
 
-      # Run command.
+      # Run command
       def process
         Utils.do_if_sync(@opt[:sync])
         role_types = select_role_types
@@ -28,7 +28,7 @@ module CMUX
 
       LABEL = %I[cm cl_disp serviceType roleType roleHAStatus hostname].freeze
 
-      # Filter list.
+      # Filter list
       def select_role_types
         title  = "Select the Role Type(s):\n".red
         table  = build_role_type_table(CM.hosts)
@@ -39,7 +39,7 @@ module CMUX
         selected.map(&:split)
       end
 
-      # Build CMUX table.
+      # Build CMUX table
       def build_role_type_table(hosts)
         header = TABLE_HEADERS.values_at(*LABEL)
         body   = hosts.flat_map do |host|
@@ -53,12 +53,12 @@ module CMUX
         FMT.table(header: header, body: body)
       end
 
-      # Select supported role types.
+      # Select supported role types
       def select_cmux_support_role_types(roles)
         roles.select { |_, r| ROLE_PORT.keys.map.include?(r[:roleType]) }
       end
 
-      # Open Service Web Console.
+      # Open Service Web Console
       def open_urls(role_types)
         role_types.each do |role_type|
           r   = [LABEL, role_type].transpose.to_h
@@ -70,12 +70,12 @@ module CMUX
         end
       end
 
-      # Build URLs.
+      # Build URLs
       def build_url(role_type)
         "http://#{role_type[:hostname]}:#{ROLE_PORT[role_type[:roleType]]}"
       end
 
-      # Build command options.
+      # Build command options
       def build_opts
         opt = CHK::OptParser.new
         opt.banner(CMD, ALIAS)

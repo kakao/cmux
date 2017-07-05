@@ -3,7 +3,7 @@ module CMUX
     # Cloudera Manager
     module CM
       class << self
-        # Select Cloudera Manager.
+        # Select Cloudera Manager
         def select_cm(args = {})
           title  = "#{args[:title]}Select Cloudera Manager:\n".red
           header = ['', 'Cloudera Manager', 'Description']
@@ -21,14 +21,14 @@ module CMUX
           selected.map { |e| e.split(' ')[1] }.shift
         end
 
-        # All clusters.
+        # All clusters
         def clusters(cms = nil)
           label = %I[cm cm_ver cm_url cm_api_ver cl cl_disp cdh_ver cl_secured]
           CM.hosts(cms).group_by { |h| h.slice(*label) }
             .map { |h, v| h.merge(hosts: v.count.to_s) }
         end
 
-        # All hosts.
+        # All hosts
         def hosts(cms = nil)
           cmux_data ||= Marshal.load(File.read(CMUX_DATA))
           cmux_data.key?(cms) && cmux_data.select! { |k, _| k == cms }
@@ -61,7 +61,7 @@ module CMUX
           end
         end
 
-        # The Zookeeper Leader of the cluster.
+        # The Zookeeper Leader of the cluster
         def zk_leader(cm, cl)
           res = hosts.find do |host|
             host[:cm] == cm &&
@@ -71,7 +71,7 @@ module CMUX
           res && res[:hostname]
         end
 
-        # The Active HMaster of the cluster.
+        # The Active HMaster of the cluster
         def hm_active(cm, cl)
           res = hosts.find do |host|
             host[:cm] == cm &&
@@ -81,7 +81,7 @@ module CMUX
           res && res[:hostname]
         end
 
-        # The HA status of the role.
+        # The HA status of the role
         def ha_status(cm, cl, role)
           cmlist = Utils.cm_config(cm)
           user, password = cmlist.values_at('user', 'password')
@@ -102,7 +102,7 @@ module CMUX
           raise CMAPIError, e.message
         end
 
-        # Check the HA status of the role.
+        # Check the HA status of the role
         def check_ha_status(cm, cl, role)
           status = nil
           msg    = 'Wait for HA status to become active'
@@ -118,7 +118,7 @@ module CMUX
           FMT.puts_str("  └── #{'OK'.green} #{status}", true)
         end
 
-        # Change the maintenance mode status of the role.
+        # Change the maintenance mode status of the role
         def change_maintenance_mode_status_role(cm, cl, role, flag)
           msg = flag ? 'Enter maintenance mode' : 'Exit maintenance mode'
           FMT.puts_str(msg.red, true)
@@ -150,17 +150,17 @@ module CMUX
           raise CMAPIError, e.message
         end
 
-        # Put the role into maintenace mode.
+        # Put the role into maintenace mode
         def enter_maintenance_mode_role(cm, cl, role)
           change_maintenance_mode_status_role(cm, cl, role, true)
         end
 
-        # Take the role out of maintenace mode.
+        # Take the role out of maintenace mode
         def exit_maintenance_mode_role(cm, cl, role)
           change_maintenance_mode_status_role(cm, cl, role, false)
         end
 
-        # The maintenance owners of the role.
+        # The maintenance owners of the role
         def maintenance_owners(cm, cl, role)
           cmlist = Utils.cm_config(cm)
           user, password = cmlist.values_at('user', 'password')
@@ -178,7 +178,7 @@ module CMUX
           raise CMAPIError, e.message
         end
 
-        # The role state.
+        # The role state
         def role_state(cm, cl, role)
           cmlist = Utils.cm_config(cm)
           user, password = cmlist.values_at('user', 'password')
@@ -196,7 +196,7 @@ module CMUX
           raise CMAPIError, e.message
         end
 
-        # Change the role state.
+        # Change the role state
         def change_role_state(cm, cl, role, cmd, max_wait)
           msg, state =
             case cmd
@@ -237,22 +237,22 @@ module CMUX
           puts "\b "
         end
 
-        # Restart the role instance.
+        # Restart the role instance
         def restart_role(cm, cl, role, max_wait)
           change_role_state(cm, cl, role, 'restart', max_wait)
         end
 
-        # Stop the role instance.
+        # Stop the role instance
         def stop_role(cm, cl, role, max_wait)
           change_role_state(cm, cl, role, 'stop', max_wait)
         end
 
-        # Start the role instance.
+        # Start the role instance
         def start_role(cm, cl, role, max_wait)
           change_role_state(cm, cl, role, 'start', max_wait)
         end
 
-        # The Nameservices of the HDFS service.
+        # The Nameservices of the HDFS service
         def nameservices(cm, cl, service)
           cmlist = Utils.cm_config(cm)
           user, password = cmlist.values_at('user', 'password')
@@ -270,7 +270,7 @@ module CMUX
           raise CMAPIError, e.message
         end
 
-        # The Nameservices that are assigned the NameNode.
+        # The Nameservices that are assigned the NameNode
         def nameservices_assigned_nn(cm, cl, role)
           service = role.split('-')[0]
           nns = nameservices(cm, cl, service).map do |n|
@@ -279,7 +279,7 @@ module CMUX
           nns.select { |n| n.include?(role) }.map { |e| e[0] }
         end
 
-        # The two NameNodes in the HA pair for the HDFS Nameservice.
+        # The two NameNodes in the HA pair for the HDFS Nameservice
         def ha_paired_nn(cm, cl, service, nameservice)
           nn = nameservices(cm, cl, service).find do |n|
             n[:name] == nameservice
@@ -288,7 +288,7 @@ module CMUX
           [nn.dig(:standBy, :roleName), nn.dig(:active, :roleName)]
         end
 
-        # Failing over NameNode.
+        # Failing over NameNode
         def failover_nn(cm, cl, role, nameservice)
           service = role.split('-')[0]
 
@@ -337,7 +337,7 @@ module CMUX
           end
         end
 
-        # Roll the edits of an HDFS Nameservice.
+        # Roll the edits of an HDFS Nameservice
         def hdfs_role_edits(cm, cl, role)
           msg = 'Roll the edits of an HDFS Nameservice'.red
           FMT.puts_str(msg.red, true)
@@ -374,7 +374,7 @@ module CMUX
           raise CMAPIError, e.message
         end
 
-        # A detailed information on an asynchronous command.
+        # A detailed information on an asynchronous command
         def command_status(cm, cl, cmd_id)
           cmlist = Utils.cm_config(cm)
           user, password = cmlist.values_at('user', 'password')
@@ -388,7 +388,7 @@ module CMUX
           raise CMAPIError, e.message
         end
 
-        # The hostname where this role runs.
+        # The hostname where this role runs
         def hostname_this_role_runs(cm, cl, role)
           selected = hosts.select { |host| host[:cm] == cm && host[:cl] == cl }
           selected.map do |host|
@@ -398,7 +398,7 @@ module CMUX
           end.flatten.compact.first
         end
 
-        # Colorize status string.
+        # Colorize status string
         def colorize_status(status)
           status = case status
                    when 'GOOD'       then status.green

@@ -1,6 +1,6 @@
 module CMUX
   module Commands
-    # Rolling Restart.
+    # Rolling Restart
     class RollingRestart
       extend Commands
 
@@ -9,19 +9,19 @@ module CMUX
         @opt = build_opts
       end
 
-      # Run command.
+      # Run command
       def process
         Utils.do_if_sync(@opt[:sync])
       end
 
       LABEL = %I[cm cl cl_disp cdh_ver cl_secured hosts].freeze
 
-      # Check to continue.
+      # Check to continue
       def continue?(message)
         @interactive ? CHK.yn?(message.cyan, true) : true
       end
 
-      # Select cluster to rolling restart.
+      # Select cluster to rolling restart
       def select_cl(title)
         cm = CM.select_cm(title: "#{title}\n\n")
 
@@ -37,13 +37,13 @@ module CMUX
         selected.flat_map(&:split)
       end
 
-      # Check the host where RegionServer runs.
+      # Check the host where RegionServer runs
       def include_rs?(hosts)
         hosts.values.map { |e| e[:role_stype] }
              .uniq.join(',').split(',').include?('RS')
       end
 
-      # Print cluster.
+      # Print cluster
       def print_cluster(cm, cl, cl_disp, cdh_ver, secured)
         print_format = " * %-16s : %s\n"
         printf print_format, 'Cloudera Manager', cm
@@ -54,13 +54,13 @@ module CMUX
         printf print_format, '    Secured    ', secured
       end
 
-      # Print service.
+      # Print service
       def print_service(service_type, service)
         print_format = " * %-16s : %s\n"
         printf print_format, 'Service', "[#{service_type}] #{service}"
       end
 
-      # Print hbase-manager.
+      # Print 'hbase-manager'
       def print_hbase_manager(cm, cl, cdh_ver)
         zk = CM.zk_leader(cm, cl)
         hbase_manager = Utils.ht4cdh(tool: 'hbase-manager', cdh_ver: cdh_ver)
@@ -70,13 +70,13 @@ module CMUX
         printf print_format, '     hbase-tool ', hbase_manager
       end
 
-      # Print role type.
+      # Print role type
       def print_role_type(role_type)
         print_format = " * %-16s : %s\n"
         printf print_format, 'Role Type', role_type
       end
 
-      # Print roles.
+      # Print roles
       def print_roles(cm, cl, roles)
         return if roles && roles.empty?
 
@@ -92,7 +92,7 @@ module CMUX
         end
       end
 
-      # Print hosts.
+      # Print hosts
       def print_hosts(hosts)
         printf " * %-16s\n", 'Hosts'
 
@@ -106,7 +106,7 @@ module CMUX
         end
       end
 
-      # Set how to run rolling restart.
+      # Set how to run rolling restart
       def set_batch_execution_condition
         q_rolling_restart
         set_batch_interval
@@ -114,14 +114,14 @@ module CMUX
         set_interactive_mode
       end
 
-      # Check whether to run rolling restart.
+      # Check whether to run rolling restart
       def q_rolling_restart
         q = 'Are you sure you want to ROLLING RESTART on the above ' \
             'roles (y|n)? '
         Utils.exit_with_msg('STOPPED'.red, true) unless CHK.yn?(q.cyan, true)
       end
 
-      # Set seconds to sleep betwenn batches.
+      # Set seconds to sleep betwenn batches
       def set_batch_interval
         q = 'Set SECONDS TO SLEEP between batches (>= 0 secs): '
         until @interval && @interval.to_i >= 0
@@ -129,7 +129,7 @@ module CMUX
         end
       end
 
-      # Set the max wait time for 'RESTART' command.
+      # Set the max wait time for 'RESTART' command
       def set_max_wait_time
         q = 'Set the MAX WAIT TIME after executing the RESTART command ' \
             '(>= 180 secs): '
@@ -138,7 +138,7 @@ module CMUX
         end
       end
 
-      # Check whether to proceed with interactive mode.
+      # Check whether to proceed with interactive mode
       def set_interactive_mode
         q = 'Do you want to proceed with INTERACTIVE MODE (y|n)? '
         @interactive = CHK.yn?(q.cyan, true)
@@ -146,7 +146,7 @@ module CMUX
         @hm_opts.concat(' --force-proceed') unless @interactive
       end
 
-      # Prepare to rolling restart for RegionServer.
+      # Prepare to rolling restart for RegionServer
       def prepare_rolling_restart_for_rs(cm, cl, role_type)
         return unless role_type == 'REGIONSERVER'
         Utils.turn_off_auto_balancer(cm, cl)
@@ -154,31 +154,31 @@ module CMUX
         Utils.export_rs(cm, cl, @exp_file)
       end
 
-      # Print 'restart' message of the host.
+      # Print 'restart' message of the host
       def print_restart_host_msg(hostname)
         msg = "#{'Restart'.red} all roles on #{hostname.yellow}"
         FMT.puts_str(msg, true)
       end
 
-      # Print 'restart' message of the role.
+      # Print 'restart' message of the role
       def print_restart_role_msg(hostname, role)
         msg = 'Restart '.red + "[#{hostname}] #{role}".yellow
         FMT.puts_str(msg, true)
       end
 
-      # Print 'stop' message of the role.
+      # Print 'stop' message of the role
       def print_stop_role_msg(hostname, role)
         msg = 'Stop '.red + "[#{hostname}] #{role}".yellow
         FMT.puts_str(msg, true)
       end
 
-      # Print 'start' message of the role.
+      # Print 'start' message of the role
       def print_start_role_msg(hostname, role)
         msg = 'Start '.red + "[#{hostname}] #{role}".yellow
         FMT.puts_str(msg, true)
       end
 
-      # Prepare to restart role.
+      # Prepare to restart role
       def before_restart_role(cm, cl, hostname, role_type, role)
         CM.enter_maintenance_mode_role(cm, cl, role)
 
@@ -191,7 +191,7 @@ module CMUX
         end
       end
 
-      # Finalize the restart operation.
+      # Finalize the restart operation
       def after_restart_role(cm, cl, hostname, role_type, role)
         case role_type
         when 'REGIONSERVER'
@@ -204,7 +204,7 @@ module CMUX
         CM.exit_maintenance_mode_role(cm, cl, role)
       end
 
-      # Wait to interval.
+      # Wait to interval
       def wait_to_interval(idx, obj_length)
         return if idx == obj_length
         msg = "Waiting up #{@interval} secondes to next batch: "
@@ -213,7 +213,7 @@ module CMUX
         Utils.countdown(@interval.to_i)
       end
 
-      # Finish rolling restart.
+      # Finish rolling restart
       def finish_rolling_restart(cm, cl, role_type)
         if role_type == 'REGIONSERVER'
           q = 'Do you want to turn on auto balancer (y|n)? '

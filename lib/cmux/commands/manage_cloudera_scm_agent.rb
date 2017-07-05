@@ -1,15 +1,15 @@
 module CMUX
   module Commands
-    # Run clouder-scm-agent in parallel.
+    # Run 'clouder-scm-agent' in parallel
     class ManageClouderaScmAgent
       extend Commands
 
-      # Command properties.
+      # Command properties
       CMD   = 'manage-cloudera-scm-agent'.freeze
       ALIAS = 'scmagent'.freeze
       DESC  = 'Run clouder-scm-agent in parallel.'.freeze
 
-      # Regist command.
+      # Regist command
       reg_cmd(cmd: CMD, alias: ALIAS, desc: DESC)
 
       # Initialize
@@ -18,7 +18,7 @@ module CMUX
         @opt  = build_opts
       end
 
-      # Run command.
+      # Run command
       def process
         Utils.do_if_sync(@opt[:sync])
         cm    = CM.select_cm(all: true)
@@ -31,7 +31,7 @@ module CMUX
 
       LABEL = %I[cm cl_disp role_stypes hostname].freeze
 
-      # Select host(s) to run cloudera-scm-agent.
+      # Select host(s) to run 'cloudera-scm-agent'
       def select_hosts(hosts)
         title  = "Select host(s) to run cloudera-scm-agent:\n".red
         table  = build_host_table(hosts)
@@ -42,7 +42,7 @@ module CMUX
         selected.map(&:split)
       end
 
-      # Build CMUX table.
+      # Build CMUX table
       def build_host_table(hosts)
         header = TABLE_HEADERS.values_at(*LABEL)
         body   = hosts.map do |host|
@@ -53,7 +53,7 @@ module CMUX
         FMT.table(header: header, body: body)
       end
 
-      # Run `cloudera-scm-agent` commands.
+      # Run 'cloudera-scm-agent' commands
       def run_scmagent(hosts, cmd_opt)
         ssh_user, ssh_opt = Utils.cmux_ssh_config
         ssh_opt = "#{ssh_opt} -T -o LogLevel=QUIET"
@@ -68,13 +68,13 @@ module CMUX
         end
       end
 
-      # Build command.
+      # Build command
       def build_command(cmd_opt)
         %[echo \"$(xxd -p #{SCMAGENT_SH})\" | xxd -p -r] +
           %( > /tmp/cmux_scmagent.sh; sh /tmp/cmux_scmagent.sh #{cmd_opt})
       end
 
-      # Print result.
+      # Print result
       def print_result(res)
         max_key_length = res.keys.map(&:length).max
         res.sort_by { |host, _| host.djust }.each do |host, log|
@@ -88,7 +88,7 @@ module CMUX
         end
       end
 
-      # Print result for RHEL-comapatible 7.
+      # Print result for RHEL-comapatible 7
       def print_result_rhel7(host, log_line, max_col_length)
         if log_line.split(' ')[1] == 'active'
           printf "%-#{max_col_length}s  %4s\n", host, "[#{'OK'.green}]"
@@ -98,7 +98,7 @@ module CMUX
         end
       end
 
-      # Print result for other Linux distributions.
+      # Print result for other Linux distributions
       def print_result_others(host, log_line, max_col_length)
         if log_line =~ /is running.../
           printf "%-#{max_col_length}s  %4s\n", host, "[#{'OK'.green}]"
@@ -108,7 +108,7 @@ module CMUX
         end
       end
 
-      # Check arugments.
+      # Check arugments
       def chk_args(parser)
         raise CMUXNoArgumentError if @args.empty?
         unless SCMAGENT_ARGS.include?(@args[0])
@@ -119,7 +119,7 @@ module CMUX
         Utils.exit_with_msg(parser, false)
       end
 
-      # Build command options.
+      # Build command options
       def build_opts
         opt    = CHK::OptParser.new
         banner = 'Usage: cmux COMMAND SCMAGENT_COMMANDS [OPTIONS]'

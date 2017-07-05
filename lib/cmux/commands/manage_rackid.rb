@@ -1,16 +1,16 @@
 module CMUX
   module Commands
-    # Shows how the rackID(s) is allocated in CM and updates rackID(s).
+    # Shows how the rackID(s) is allocated in CM and updates rackID(s)
     class ManageRackID
       extend Commands
 
-      # Command properties.
+      # Command properties
       CMD   = 'manage-rackid'.freeze
       ALIAS = 'rackid'.freeze
       DESC  = 'Shows how the rackID(s) is allocated in CM and updates ' \
               'rackID(s).'.freeze
 
-      # Regist command.
+      # Regist command
       reg_cmd(cmd: CMD, alias: ALIAS, desc: DESC)
 
       # Initialize
@@ -18,7 +18,7 @@ module CMUX
         @opt = build_opts
       end
 
-      # Run command.
+      # Run command
       def process
         Utils.do_if_sync(@opt[:sync])
         list    = filter_list
@@ -33,7 +33,7 @@ module CMUX
       LABEL     = %I[cm cl cl_disp rackid].freeze
       LABEL_DTL = %I[cm cl_disp hostname role_stypes rackid hostid].freeze
 
-      # Filter list.
+      # Filter list
       def filter_list
         header = TABLE_HEADERS.values_at(*LABEL).concat(ROLES)
         title  = "Allocated Role(s) in rack. Select to view details:\n" \
@@ -53,14 +53,14 @@ module CMUX
         [title, header, selected]
       end
 
-      # Build CMUX table.
+      # Build CMUX table
       def build_rackmap_table(header)
         rackmap = build_rackmap
         body    = rackmap.map { |rack, roles| rack + count_roles(roles) }.sort
         FMT.table(header: header, body: body, rjust: (4..10).to_a)
       end
 
-      # Build rackmap.
+      # Build rackmap
       def build_rackmap
         rackmap = Hash.new { |k, v| k[v] = Hash.new(0) }
         CM.hosts.each do |h|
@@ -70,7 +70,7 @@ module CMUX
         rackmap
       end
 
-      # Count roles.
+      # Count roles
       def count_roles(roles)
         ROLES.map do |role|
           roles.select { |r, _| r.split('(').first == role }
@@ -78,7 +78,7 @@ module CMUX
         end.map(&:to_s)
       end
 
-      # Filter details.
+      # Filter details
       def filter_details(list)
         title  = "Select host(s) to which you want to assign rackId :\n".red
         header = TABLE_HEADERS.values_at(*LABEL_DTL)
@@ -92,7 +92,7 @@ module CMUX
         [title, header, selected]
       end
 
-      # Build CMUX table.
+      # Build CMUX table
       def build_dtable(list, header)
         Utils.awaiter(message: 'Loading  ', smcup: true) do
           body = list.map do |e|
@@ -106,7 +106,7 @@ module CMUX
         end
       end
 
-      # Print rackmap.
+      # Print rackmap
       def print_rackmap(map, details)
         title, header, body = map
         list = FMT.table(header: header, body: body, rjust: (4..10).to_a)
@@ -118,7 +118,7 @@ module CMUX
         puts "\n", title, list, "\n"
       end
 
-      # Check whether to update RackID.
+      # Check whether to update RackID
       def q_update_rackid
         msg = '> Do you want to update these rack ID (y|n)? '
         exit unless CHK.yn?(msg.cyan)
@@ -132,7 +132,7 @@ module CMUX
         rackid
       end
 
-      # Update rackid to the Cloudera Manager.
+      # Update rackid to the Cloudera Manager
       def update_rackid(list)
         rackid = q_update_rackid
         maxes = list.transpose.map { |g| g.map(&:length).max }
@@ -162,7 +162,7 @@ module CMUX
         end
       end
 
-      # Update rackid of host.
+      # Update rackid of host
       def update_host_rackid(host, rackid)
         url = "#{host[:cm_url]}/api/#{host[:cm_api_ver]}/hosts/#{host[:hostid]}"
         body = JSON.generate('rackId' => rackid)
@@ -187,7 +187,7 @@ module CMUX
         opt.parse
       end
 
-      # Build command options.
+      # Build command options
       def build_opts
         opt = CHK::OptParser.new
         build_optss(opt)

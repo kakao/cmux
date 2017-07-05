@@ -1,21 +1,21 @@
 module CMUX
   module Utils
-    # Request APIs.
+    # Request APIs
     module ApiCaller
       class << self
-        # Send get request.
+        # Send get request
         def get_req(args = {})
           res = req_impl(Net::HTTP::Get, args)
           res_impl(res, args)
         end
 
-        # Send put request.
+        # Send put request
         def put_req(args = {})
           res = req_impl(Net::HTTP::Put, args)
           res_impl(res, args)
         end
 
-        # Send post request.
+        # Send post request
         def post_req(args = {})
           res = req_impl(Net::HTTP::Post, args)
           res_impl(res, args)

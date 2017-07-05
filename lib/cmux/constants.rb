@@ -42,7 +42,7 @@ module CMUX
   }.freeze
 
   ### rolling-restart-roles
-  # Do not run rolling-restart-roles for these roles.
+  # Do not run rolling-restart-roles for these roles
   RR_EXCEPT_ROLES = %w[
     BALANCER GATEWAY ACTIVITYMONITOR HOSTMONITOR EVENTSERVER
     SERVICEMONITOR ALERTPUBLISHER
@@ -111,10 +111,10 @@ module CMUX
   }.freeze
 
   ### Roles
-  # Role types are required to check HA status.
+  # Role types are required to check HA status
   HA_RTYPES = %w[MASTER NAMENODE RESOURCEMANAGER].freeze
 
-  # Role types are required to check HA status and Zookeeper server.
+  # Role types are required to check HA status and Zookeeper server
   CHK_RTYPES = %w[MASTER NAMENODE RESOURCEMANAGER SERVER].freeze
 
   # Role types

@@ -1,10 +1,10 @@
 module CMUX
-  # Regist new command.
+  # Regist new command
   module Commands
-    # CMUX commands.
+    # CMUX commands
     CMDS = CMUX::Utils.new_rec_hash
 
-    # Regist command to CMUX.
+    # Regist command to CMUX
     def reg_cmd(args = {})
       CMDS[args[:cmd]].merge!(class: self,
                               alias: args[:alias],

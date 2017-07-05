@@ -24,19 +24,19 @@ module CMUX
   API = Utils::ApiCaller
 
   # CMUX is a set of commands for managing CDH clusters
-  # using Cloudera Manager REST API.
+  # using Cloudera Manager REST API
   class Cmux
     # Initialize.
     def initialize
       load_n_require
     end
 
-    # Load extensions.
+    # Load extensions
     def load_n_require
       Dir.glob("#{CMUX_HOME}/ext/{,/*/**}/*.rb") { |e| require e }
     end
 
-    # Run command.
+    # Run command
     def run(*args)
       cmd = Utils.to_cmux_cmd(args.shift)
       Commands::CMDS[cmd][:class].new(*args).process

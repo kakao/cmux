@@ -1,7 +1,7 @@
 module CMUX
   module Utils
     module Checker
-      # Parse command options.
+      # Parse command options
       class OptParser
         attr_reader :parser
 
@@ -12,7 +12,7 @@ module CMUX
           help_option
         end
 
-        # Set banner.
+        # Set banner
         def banner(cmd, cmd_alias, banner = nil)
           @parser.new do |opt|
             opt.banner = banner || 'Usage: cmux COMMAND [OPTIONS]'
@@ -26,7 +26,7 @@ module CMUX
           @parser.new { |opt| opt.banner += "#{title}\n" }
         end
 
-        # Lists of roles.
+        # Lists of roles
         def roles
           @parser.new do |opt|
             body = slice_list(ROLE_TYPES.keys.sort, 3)
@@ -35,7 +35,7 @@ module CMUX
           end
         end
 
-        # commands of the 'cloudera-scm-agent'.
+        # commands of the 'cloudera-scm-agent'
         def scmagent
           @parser.new do |opt|
             body = slice_list(SCMAGENT_ARGS.sort, 3)
@@ -44,7 +44,7 @@ module CMUX
           end
         end
 
-        # Add the description of the 'shell_command' to the banner.
+        # Add the description of the 'shell_command' to the banner
         def shell_command
           @parser.new do |opt|
             opt.banner += "    shell_command[ shell_command[ ...]]
@@ -53,7 +53,7 @@ module CMUX
           end
         end
 
-        # The '--sync' option.
+        # The '--sync' option
         def sync_option
           @opts[:sync] = false
           @parser.new do |opt|
@@ -66,7 +66,7 @@ module CMUX
           end
         end
 
-        # The '--query' option.
+        # The '--query' option
         def query_option
           @parser.new do |opt|
             opt_short = '-q'
@@ -78,7 +78,7 @@ module CMUX
           end
         end
 
-        # The '--user' option.
+        # The '--user' option
         def hadoop_user_name_option
           @parser.new do |opt|
             opt_short = '-u'
@@ -90,7 +90,7 @@ module CMUX
           end
         end
 
-        # The '--preview' option.
+        # The '--preview' option
         def preview_option
           @opts[:preview] = false
           @parser.new do |opt|
@@ -103,7 +103,7 @@ module CMUX
           end
         end
 
-        # The '--interval' option.
+        # The '--interval' option
         def interval_option
           @opts[:interval] = 10
           @parser.new do |opt|
@@ -116,7 +116,7 @@ module CMUX
           end
         end
 
-        # The '--file' option.
+        # The '--file' option
         def file_option
           @parser.new do |opt|
             opt_short = '-f'
@@ -128,7 +128,7 @@ module CMUX
           end
         end
 
-        # The '--list' option.
+        # The '--list' option
         def list_option
           @parser.new do |opt|
             opt_short = '-l'
@@ -140,7 +140,7 @@ module CMUX
           end
         end
 
-        # The '--help' option.
+        # The '--help' option
         def help_option
           @parser.new do |opt|
             opt_short = '-h'
@@ -153,7 +153,7 @@ module CMUX
           end
         end
 
-        # Parse options.
+        # Parse options
         def parse
           @parser.parse!
           @opts

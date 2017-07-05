@@ -1,15 +1,15 @@
 module CMUX
   module Commands
-    # Split tmux window and execute each command in each pane.
+    # Split tmux window and execute each command in each pane
     class TmuxWindowSplitter
       extend Commands
 
-      # Command properties.
+      # Command properties
       CMD   = 'tmux-window-splitter'.freeze
       ALIAS = 'tws'.freeze
       DESC  = 'Split tmux window and execute each command in each pane.'.freeze
 
-      # Regist command.
+      # Regist command
       reg_cmd(cmd: CMD, alias: ALIAS, desc: DESC)
 
       # Initialize
@@ -18,7 +18,7 @@ module CMUX
         @opt  = build_opts
       end
 
-      # Run command.
+      # Run command
       def process
         @win_id, @first_pane_cmd = nil
         tempfile = Utils.cr_tempfile(@args)
@@ -33,17 +33,17 @@ module CMUX
         run_first_pane_command
       end
 
-      # Print commands for debug.
+      # Print commands for debug
       def print_commands(idx, tf)
         puts "[#{idx}] #{File.read(tf)}" if Utils.cmux_tws_mode == 'debug'
       end
 
-      # Build TMUX panes.
+      # Build TMUX panes
       def build_tmux_panes(idx, tf)
         idx.zero? ? build_first_pane(tf) : build_other_panes(tf)
       end
 
-      # Build first pane.
+      # Build first pane
       def build_first_pane(tf)
         pane_cnt = `tmux list-panes | wc -l`
         if pane_cnt.strip.to_i > 1 && @args.length > 1
@@ -55,24 +55,24 @@ module CMUX
         end
       end
 
-      # Build other panes and execute each command in each pane.
+      # Build other panes and execute each command in each pane
       def build_other_panes(tf)
         system %(tmux split-window -t #{@win_id} "$SHELL -i #{tf}";) +
                %(tmux select-layout -t #{@win_id} tiled)
       end
 
-      # TMUX synchronize-panes on.
+      # TMUX synchronize-panes on
       def sync_pane
         cmd = 'tmux set-window-option synchronize-panes on'
         system cmd if @args.length > 1
       end
 
-      # Run first pane command.
+      # Run first pane command
       def run_first_pane_command
         system %($SHELL -i #{@first_pane_cmd})
       end
 
-      # Check arugments.
+      # Check arugments
       def chk_args(parser)
         raise CMUXNoArgumentError if @args.empty?
         raise CMUXNotInTMUXError if @args.length > 1 && (system 'test -z $TMUX')
@@ -84,7 +84,7 @@ module CMUX
         exit
       end
 
-      # Build command options.
+      # Build command options
       def build_opts
         opt    = CHK::OptParser.new
         banner = 'Usage: cmux COMMAND SHELL_COMMAND [OPTIONS]'

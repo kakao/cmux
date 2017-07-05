@@ -1,16 +1,16 @@
 module CMUX
   module Commands
-    # Rolling restart roles of hosts.
+    # Rolling restart roles of hosts
     class RollingRestartHosts < RollingRestart
-      # Command properties.
+      # Command properties
       CMD   = 'rolling-restart-hosts'.freeze
       ALIAS = 'rrh'.freeze
       DESC  = 'Rolling restart roles of hosts.'.freeze
 
-      # Regist command.
+      # Regist command
       reg_cmd(cmd: CMD, alias: ALIAS, desc: DESC)
 
-      # Run command.
+      # Run command
       def process
         super
         cluster = select_cl('ROLLING RESTART HOSTS')
@@ -24,7 +24,7 @@ module CMUX
 
       LABEL = %I[hostname role_stypes].freeze
 
-      # Select hosts to rolling restart.
+      # Select hosts to rolling restart
       def select_hosts(cluster)
         cm, cl, cl_disp = cluster.values_at(0..2)
 
@@ -44,7 +44,7 @@ module CMUX
         Utils.exit_with_msg("[#{cm}] #{cl}: #{err.message}".red, false)
       end
 
-      # Build CMUX table.
+      # Build CMUX table
       def build_host_table(hosts)
         header = TABLE_HEADERS.values_at(*LABEL)
         body   = hosts.map do |host|
@@ -56,7 +56,7 @@ module CMUX
         FMT.table(header: header, body: body)
       end
 
-      # Attach roles to list.
+      # Attach roles to list
       def attach_roles(list, hosts)
         list.flat_map do |e|
           hostname, role_stype = e.split(' ')
@@ -68,7 +68,7 @@ module CMUX
         end.to_h
       end
 
-      # Sort roles by a priority.
+      # Sort roles by a priority
       def sort_roles(roles)
         roles.sort_by do |_, r_props|
           case r_props[:roleType]
@@ -80,7 +80,7 @@ module CMUX
         end.to_h
       end
 
-      # Print selected hosts.
+      # Print selected hosts
       def print_the_selection(cluster, hosts)
         cm, cl, cl_disp, cdh_ver, secured = cluster.values_at(0..-2)
 
@@ -94,7 +94,7 @@ module CMUX
         FMT.horizonal_splitter('-')
       end
 
-      # Perform rolling restart.
+      # Perform rolling restart
       def rolling_restart(clusters, hosts)
         cm, cl = clusters.values_at(0, 1)
         role_type = 'REGIONSERVER' if include_rs?(hosts)
@@ -104,7 +104,7 @@ module CMUX
         finish_rolling_restart(cm, cl, role_type)
       end
 
-      # Run rolling restart.
+      # Run rolling restart
       def run_rolling_restart(hosts, cm, cl)
         hosts.each.with_index(1) do |(host, props), idx|
           print_restart_host_msg(host)
@@ -114,7 +114,7 @@ module CMUX
         end
       end
 
-      # Stop roles.
+      # Stop roles
       def stop_roles(cm, cl, hostname, roles)
         roles.each do |role, props|
           if RR_EXCEPT_ROLES.include?(props[:roleType])
@@ -127,7 +127,7 @@ module CMUX
         end
       end
 
-      # Start roles.
+      # Start roles
       def start_roles(cm, cl, hostname, roles)
         roles.to_a.reverse.to_h.each do |role, props|
           if RR_EXCEPT_ROLES.include?(props[:roleType])
@@ -140,7 +140,7 @@ module CMUX
         end
       end
 
-      # Build command options.
+      # Build command options
       def build_opts
         opt = CHK::OptParser.new
         opt.banner(CMD, ALIAS)

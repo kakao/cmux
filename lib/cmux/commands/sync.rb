@@ -1,15 +1,15 @@
 module CMUX
   module Commands
-    # CM API Synchronizer.
+    # CM API Synchronizer
     class Sync
       extend Commands
 
-      # Command properties.
+      # Command properties
       CMD   = 'sync'.freeze
       ALIAS = ''.freeze
       DESC  = 'CM API Synchronizer.'.freeze
 
-      # Regist command.
+      # Regist command
       reg_cmd(cmd: CMD, alias: ALIAS, desc: DESC)
 
       # Initialize
@@ -23,7 +23,7 @@ module CMUX
         @principals = Utils.new_rec_hash
       end
 
-      # Run command.
+      # Run command
       def process
         Utils.awaiter(message: 'Fetching CM API resources  ') do
           @cmlist.pmap do |cm, cm_props|
@@ -42,7 +42,7 @@ module CMUX
 
       private
 
-      # Run sync.
+      # Run sync
       def run_sync(cm, base_url, user, password)
         cm_ver(cm, base_url, user, password)
         api_base_url = "#{base_url}/api/#{cm_api_ver(cm)}"
@@ -53,14 +53,14 @@ module CMUX
         secure_cluster?(cm)
       end
 
-      # Write CMUX data to file.
+      # Write CMUX data to file
       def write_to_file
         File.open(CMUX_DATA, 'w') do |file|
           file.write Marshal.dump(@cmux_data)
         end
       end
 
-      # The version of Cloudera Manager.
+      # The version of Cloudera Manager
       def cm_ver(cm, base_url, user, password)
         url = "#{base_url}/api/v9/cm/version"
         res = API.get_req(url: url, user: user, password: password,
@@ -78,7 +78,7 @@ module CMUX
       end
 
       # The Kerberos principals needed by the services being managed
-      # by Cloudera Manager.
+      # by Cloudera Manager
       def cm_kerberos_principals(cm, api_base_url, user, password)
         url  = "#{api_base_url}/cm/kerberosPrincipals"
         res  = API.get_req(url: url, user: user, password: password,
@@ -90,7 +90,7 @@ module CMUX
         raise CMAPIError, "#{cm}: #{e.message}", e.backtrace
       end
 
-      # Clusters.
+      # Clusters
       def clusters(cm, api_base_url, user, password)
         url      = "#{api_base_url}/clusters"
         clusters = API.get_req(url: url, user: user, password: password,
@@ -108,7 +108,7 @@ module CMUX
         )
       end
 
-      # Hosts.
+      # Hosts
       def hosts(cm, api_base_url, user, password)
         url   = "#{api_base_url}/hosts?view=full"
         hosts = API.get_req(url: url, user: user, password: password,
@@ -118,7 +118,7 @@ module CMUX
         raise CMAPIError, "#{cm}: #{e.message}", e.backtrace
       end
 
-      # Build host data.
+      # Build host data
       def build_host_data(cm, host)
         @hosts.dig(cm, :hosts, host[:hostId]).merge!(
           hostname:     host[:hostname],
@@ -129,7 +129,7 @@ module CMUX
         )
       end
 
-      # Roles of the Cloudera Management Services.
+      # Roles of the Cloudera Management Services
       def cms_roles(cm, api_base_url, user, password)
         url      = "#{api_base_url}/cm/service/roles"
         roles    = API.get_req(url: url, user: user, password: password,
@@ -140,7 +140,7 @@ module CMUX
         raise CMAPIError, "#{cm}: #{e.message}", e.backtrace
       end
 
-      # Build CMS roles.
+      # Build CMS roles
       def build_cms_roles_data(cm, base_url, role)
         @roles.dig(cm, :roles, role[:hostRef][:hostId], role[:name]).merge!(
           roleType:     role[:type],
@@ -154,7 +154,7 @@ module CMUX
         )
       end
 
-      # Services registered in the clusters.
+      # Services registered in the clusters
       def services(cm, api_base_url, user, password)
         @cmux_data.dig(cm, :cl).keys.pmap do |cl|
           url      = "#{api_base_url}/clusters/#{cl}/services"
@@ -166,7 +166,7 @@ module CMUX
         raise CMAPIError, "#{cm}: #{e.message}", e.backtrace
       end
 
-      # Build service data.
+      # Build service data
       def build_service_data(cm, cl, service)
         @services.dig(cm, :cl, cl, :services, service[:name]).merge!(
           type:       service[:type],
@@ -174,7 +174,7 @@ module CMUX
         )
       end
 
-      # Roles of a given service.
+      # Roles of a given service
       def roles(cm, api_base_url, user, password)
         @services.dig(cm, :cl).pmap do |cl, cl_props|
           cl_props[:services].pmap do |service, service_props|
@@ -188,7 +188,7 @@ module CMUX
         raise CMAPIError, "#{cm}: #{e.message}", e.backtrace
       end
 
-      # Build role data.
+      # Build role data
       def build_role_data(cm, service, role)
         @roles.dig(cm, :roles, role.dig(:hostRef, :hostId), role[:name]).merge!(
           roleType:     role[:type],
@@ -203,7 +203,7 @@ module CMUX
         )
       end
 
-      # Build short role type.
+      # Build short role type
       def role_stype(role)
         case role[:type]
         when 'SERVER'   then role_stype_zk(role)
@@ -212,7 +212,7 @@ module CMUX
         end
       end
 
-      # Build sort role type for HA_RTYPES.
+      # Build sort role type for HA_RTYPES
       def role_stype_ha(role)
         case role[:haStatus]
         when 'ACTIVE'  then "#{ROLE_TYPES[role[:type]]}(A)"
@@ -221,7 +221,7 @@ module CMUX
         end
       end
 
-      # BUilf short role type for zookeeper.
+      # BUilf short role type for zookeeper
       def role_stype_zk(role)
         case role[:zooKeeperServerMode]
         when 'REPLICATED_LEADER'   then "#{ROLE_TYPES[role[:type]]}(L)"
@@ -236,7 +236,7 @@ module CMUX
         role[:haStatus] || role[:zooKeeperServerMode] || '-'
       end
 
-      # Hosts associated with the cluster.
+      # Hosts associated with the cluster
       def cl_hosts(cm, api_base_url, user, password)
         @cmux_data.dig(cm, :cl).keys.pmap do |cl|
           url      = "#{api_base_url}/clusters/#{cl}/hosts"
@@ -250,19 +250,19 @@ module CMUX
         raise CMAPIError, "#{cm}: #{e.message}", e.backtrace
       end
 
-      # Merge data to CMUX.
+      # Merge data to CMUX
       def merge_to_cmux(cm, cl, host)
         merge_host_to_cmux(cm, cl, host)
         merge_roles_to_cmux(cm, cl, host)
         delete_temp_host(cm, host)
       end
 
-      # Merge host data to CMUX.
+      # Merge host data to CMUX
       def merge_host_to_cmux(cm, cl, host)
         @cmux_data.dig(cm, :cl, cl, :hosts)[host] = @hosts.dig(cm, :hosts, host)
       end
 
-      # Merge role data to CMUX.
+      # Merge role data to CMUX
       def merge_roles_to_cmux(cm, cl, host)
         role_stypes, role_health, role_m_owners = pull_role_data(cm, host)
 
@@ -274,7 +274,7 @@ module CMUX
         )
       end
 
-      # Pull role data.
+      # Pull role data
       def pull_role_data(cm, host)
         label = %I[roleSType roleHealth roleMOwners]
         @roles.dig(cm, :roles, host).values.map do |h|
@@ -282,13 +282,13 @@ module CMUX
         end.transpose
       end
 
-      # Delete host data from temporary hash(@hosts).
+      # Delete host data from temporary hash(@hosts)
       def delete_temp_host(cm, host)
         @hosts.dig(cm, :hosts).delete(host)
         @hosts.delete(cm) if @hosts.dig(cm, :hosts).empty?
       end
 
-      # Check whether secure cluster.
+      # Check whether secure cluster
       def secure_cluster?(cm)
         @cmux_data.dig(cm, :cl).pmap do |cl, cl_props|
           cl_props[:hosts].values.map do |host_props|
@@ -302,7 +302,7 @@ module CMUX
         end
       end
 
-      # Host are not registed in any clusters.
+      # Host are not registed in any clusters
       def hosts_not_registed_in_any_clusters
         @hosts.pmap do |cm, _|
           @cmux_data.dig(cm, :cl, "\u00A0").merge!(
@@ -313,12 +313,12 @@ module CMUX
         end
       end
 
-      # The last version of the Cloudera Manager.
+      # The last version of the Cloudera Manager
       def cm_api_ver(cm)
         Utils.version_map(CM_API_MAP, @cmux_data[cm][:version])
       end
 
-      # Build command options.
+      # Build command options
       def build_opts
         opt = CHK::OptParser.new
         opt.banner(CMD, ALIAS)

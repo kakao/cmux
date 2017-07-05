@@ -1,15 +1,15 @@
 module CMUX
   module Commands
-    # Run impala shell.
+    # Run impala shell
     class ImpalaShell
       extend Commands
 
-      # Command properties.
+      # Command properties
       CMD   = 'shell-impala'.freeze
       ALIAS = 'si'.freeze
       DESC  = 'Run impala shell.'.freeze
 
-      # Regist command.
+      # Regist command
       reg_cmd(cmd: CMD, alias: ALIAS, desc: DESC)
 
       # Initialize
@@ -28,7 +28,7 @@ module CMUX
 
       LABEL = %I[cm cl_disp cl_secured hostname].freeze
 
-      # Select cluster(s) to run impala-shell
+      # Select cluster(s) to run 'impala-shell'
       def select_hosts
         title  = "Select cluster(s) to run impala shell:\n".red
         table  = build_host_table(CM.hosts)
@@ -48,7 +48,7 @@ module CMUX
         FMT.table(header: header, body: body, rjust: [2])
       end
 
-      # Run impala-shell.
+      # Run 'impala-shell'
       def run_impala_shell(hosts)
         cmlist = Utils.cm_config
         ssh_user, ssh_opt = Utils.cmux_ssh_config
@@ -62,19 +62,19 @@ module CMUX
         TmuxWindowSplitter.new(*cmds).process
       end
 
-      # Build command.
+      # Build command
       def build_command(host, ssh_user, ssh_opt, cmd)
         banner = build_banner(host[:cl_disp], host[:hostname])
         %(#{banner} ssh #{ssh_opt} #{ssh_user}@#{host[:hostname]} "#{cmd}")
       end
 
-      # Build login banner.
+      # Build login banner
       def build_banner(cl_disp, hostname)
         msg = "[#{cl_disp}] #{hostname}\n - Impalad"
         Utils.login_banner(msg)
       end
 
-      # Build impala shell command.
+      # Build impala shell command
       def build_is_command(list, cm, cl_secured, hostname)
         if cl_secured == 'Y'
           principal = list.dig(cm, 'service', 'impala', 'kerberos', 'principal')
@@ -85,7 +85,7 @@ module CMUX
         %(#{kinit} impala-shell -i #{hostname})
       end
 
-      # Build command options.
+      # Build command options
       def build_opts
         opt = CHK::OptParser.new
         opt.banner(CMD, ALIAS)

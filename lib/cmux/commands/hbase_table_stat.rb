@@ -1,15 +1,15 @@
 module CMUX
   module Commands
-    # Run hbase-table-stat.
+    # Run 'hbase-table-stat'
     class HbaseTableStat
       extend Commands
 
-      # Command properties.
+      # Command properties
       CMD   = 'hbase-table-stat'.freeze
       ALIAS = 'hts'.freeze
       DESC  = 'Run hbase-table-stat.'.freeze
 
-      # Regist command.
+      # Regist command
       reg_cmd(cmd: CMD, alias: ALIAS, desc: DESC)
 
       # Initialize
@@ -17,7 +17,7 @@ module CMUX
         @opt = build_opts
       end
 
-      # Run command.
+      # Run command
       def process
         Utils.do_if_sync(@opt[:sync])
         clusters = select_clusters(CM.hosts)
@@ -28,7 +28,7 @@ module CMUX
 
       LABEL = %I[cm cl_disp cdh_ver cl_secured cl].freeze
 
-      # Select cluster(s) to run hbase-table-stat.
+      # Select cluster(s) to run 'hbase-table-stat'
       def select_clusters(hosts)
         title  = "Select cluster(s) to run hbase-table-stat:\n".red
         table  = build_cluster_table(hosts)
@@ -39,7 +39,7 @@ module CMUX
         selected.map(&:split)
       end
 
-      # Build CMUX table.
+      # Build CMUX table
       def build_cluster_table(hosts)
         header = TABLE_HEADERS.values_at(*LABEL)
         body   = hosts.select { |h| h[:role_stypes].include?('HM(A)') }
@@ -48,7 +48,7 @@ module CMUX
         FMT.table(header: header, body: body, rjust: [2, 3, 4])
       end
 
-      # Run hbase-table-stat.
+      # Run 'hbase-table-stat'
       def run_hts(clusters)
         cmds = clusters.map do |cluster|
           build_command([LABEL, cluster].transpose.to_h)
@@ -57,7 +57,7 @@ module CMUX
         TmuxWindowSplitter.new(*cmds).process
       end
 
-      # Build command.
+      # Build command
       def build_command(cluster)
         banner = build_banner(cluster[:cl_disp], cluster[:cdh_ver])
         hduser = "HADOOP_USER_NAME=#{@opt[:user]}" if @opt[:user]
@@ -73,14 +73,14 @@ module CMUX
         Utils.login_banner(msg)
       end
 
-      # Build hbase-table-stat options.
+      # Build 'hbase-table-stat' options
       def build_hts_opts(cm, secured)
         opt = "--interval #{@opt[:interval]}"
         opt += Utils.gen_krb_opt_for_ht(cm) if secured == 'Y'
         opt
       end
 
-      # Build command options.
+      # Build command options
       def build_opts
         opt = CHK::OptParser.new
         opt.banner(CMD, ALIAS)

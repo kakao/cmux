@@ -1,15 +1,15 @@
 module CMUX
   module Commands
-    # Run hbase shell.
+    # Run hbase shell
     class HBaseShell
       extend Commands
 
-      # Command properties.
+      # Command properties
       CMD   = 'shell-hbase'.freeze
       ALIAS = 'sh'.freeze
       DESC  = 'Run hbase shell.'.freeze
 
-      # Regist command.
+      # Regist command
       reg_cmd(cmd: CMD, alias: ALIAS, desc: DESC)
 
       # Initialize
@@ -17,7 +17,7 @@ module CMUX
         @opt = build_opts
       end
 
-      # Run command.
+      # Run command
       def process
         Utils.do_if_sync(@opt[:sync])
         clusters = select_clusters(CM.hosts)
@@ -28,7 +28,7 @@ module CMUX
 
       LABEL = %I[cm cl_disp cl_secured cl].freeze
 
-      # Select cluster(s) to run hbase-shell.
+      # Select cluster(s) to run 'hbase-shell'
       def select_clusters(hosts)
         title  = "Select cluster(s) to run hbase shell:\n".red
         table  = build_cluster_table(hosts)
@@ -39,7 +39,7 @@ module CMUX
         selected.map(&:split)
       end
 
-      # Build CMUX table.
+      # Build CMUX table
       def build_cluster_table(hosts)
         header = TABLE_HEADERS.values_at(*LABEL)
         body   = hosts.select { |h| h[:role_stypes].include?('HM(A)') }
@@ -48,7 +48,7 @@ module CMUX
         FMT.table(header: header, body: body, rjust: [2])
       end
 
-      # Run hbase-shell.
+      # Run 'hbase-shell'
       def run_hbase_shell(clusters)
         cmlist = Utils.cm_config
         ssh_user, ssh_opt = Utils.cmux_ssh_config
@@ -62,7 +62,7 @@ module CMUX
         TmuxWindowSplitter.new(*cmds).process
       end
 
-      # Build hbase shell command.
+      # Build hbase shell command
       def build_hs_command(list, cm, cl_disp, cl_secured)
         irbrc = "#{IRBRC} #{IRBRC_LOCAL}"
         cmd   = %(\"echo \"$(xxd -p <(cat #{irbrc} 2> /dev/null))\") +
@@ -78,20 +78,20 @@ module CMUX
         cmd += %( hbase shell\")
       end
 
-      # Build command.
+      # Build command
       def build_command(cluster, ssh_user, ssh_opt, cmd)
         hm     = CM.hm_active(cluster[:cm], cluster[:cl])
         banner = build_banner(cluster[:cl_disp], hm)
         "#{banner} ssh #{ssh_opt} #{ssh_user}@#{hm} #{cmd}"
       end
 
-      # Build login banner.
+      # Build login banner
       def build_banner(cl_disp, hm)
         msg = "[#{cl_disp}] #{hm}\n - HMaster (Active)"
         Utils.login_banner(msg)
       end
 
-      # Build command options.
+      # Build command options
       def build_opts
         opt = CHK::OptParser.new
         opt.banner(CMD, ALIAS)

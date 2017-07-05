@@ -1,15 +1,15 @@
 module CMUX
   module Commands
-    # Run hbase-region-inspector.
+    # Run hbase-region-inspector
     class HBaseRegionInspector
       extend Commands
 
-      # Command properties.
+      # Command properties
       CMD   = 'hbase-region-inspector'.freeze
       ALIAS = 'hri'.freeze
       DESC  = 'Run hbase-region-inspector.'.freeze
 
-      # Regist command.
+      # Regist command
       reg_cmd(cmd: CMD, alias: ALIAS, desc: DESC)
 
       # Initialize
@@ -18,7 +18,7 @@ module CMUX
         @hri_port = HRI_PORT
       end
 
-      # Run command.
+      # Run command
       def process
         Utils.do_if_sync(@opt[:sync])
         clusters = select_clusters(CM.hosts)
@@ -29,7 +29,7 @@ module CMUX
 
       LABEL = %I[cm cl_disp cdh_ver cl_secured cl].freeze
 
-      # Select cluster(s) to run hbase-region-inspector.
+      # Select cluster(s) to run 'hbase-region-inspector'
       def select_clusters(hosts)
         title  = "Select cluster(s) to run hbase-region-inspector:\n".red
         table  = build_cluster_table(hosts)
@@ -40,7 +40,7 @@ module CMUX
         selected.map(&:split)
       end
 
-      # Build CMUX table.g
+      # Build CMUX table
       def build_cluster_table(hosts)
         header = TABLE_HEADERS.values_at(*LABEL)
         body   = hosts.select { |h| h[:role_stypes].include?('HM(A)') }
@@ -49,7 +49,7 @@ module CMUX
         FMT.table(header: header, body: body, rjust: [2, 3, 4])
       end
 
-      # Run hbase-region-inspector.
+      # Run 'hbase-region-inspector'
       def run_hri(clusters)
         cmds = clusters.map do |cluster|
           build_command([LABEL, cluster].transpose.to_h)
@@ -58,7 +58,7 @@ module CMUX
         TmuxWindowSplitter.new(*cmds).process
       end
 
-      # Build command.
+      # Build command
       def build_command(cluster)
         banner = build_banner(cluster[:cl_disp], cluster[:cdh_ver])
         hri = Utils.hri4cdh(cluster[:cdh_ver])
@@ -72,7 +72,7 @@ module CMUX
         Utils.login_banner(msg)
       end
 
-      # Build hbase-region-inspector options.
+      # Build 'hbase-region-inspector' options
       def build_hri_opts(cm, cl, secured)
         @hri_port += 1
         @hri_port += 1 while CHK.port_open?(nil, @hri_port, 1)
@@ -84,7 +84,7 @@ module CMUX
         opt
       end
 
-      # Build command options.
+      # Build command options
       def build_opts
         opt = CHK::OptParser.new
         opt.banner(CMD, ALIAS)

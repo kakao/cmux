@@ -1,16 +1,16 @@
 module CMUX
   module Commands
-    # Rolling restart roles.
+    # Rolling restart roles
     class RollingRestartRoles < RollingRestart
       # Command properties.
       CMD   = 'rolling-restart-roles'.freeze
       ALIAS = 'rrr'.freeze
       DESC  = 'Rolling restart roles.'.freeze
 
-      # Regist command.
+      # Regist command
       reg_cmd(cmd: CMD, alias: ALIAS, desc: DESC)
 
-      # Run command.
+      # Run command
       def process
         super
         role_type = select_role_type
@@ -25,7 +25,7 @@ module CMUX
       LABEL = %I[cm cl cl_disp serviceType roleType cdh_ver serviceName
                  cl_secured].freeze
 
-      # Select role type to rolling restart.
+      # Select role type to rolling restart
       def select_role_type
         cm, cl = select_cl('ROLLING RESTART ROLES').values_at(0, 1)
 
@@ -56,17 +56,17 @@ module CMUX
         FMT.table(header: header, body: body)
       end
 
-      # Select to run rolling restart for this role type.
+      # Select to run rolling restart for this role type
       def select_rr_roles(host)
         host[:roles].select { |_, r| run_rr?(r[:roleType]) }
       end
 
-      # Check to run rolling restart for this role type.
+      # Check to run rolling restart for this role type
       def run_rr?(role_type)
         RR_EXCEPT_ROLES.include?(role_type) ? false : true
       end
 
-      # Select role to rolling restart.
+      # Select role to rolling restart
       def select_role(role_type)
         cm, cl, cl_disp, s_type, r_type, _, service = role_type
 
@@ -127,7 +127,7 @@ module CMUX
         Utils.exit_with_msg("[#{cm}] #{cl}: #{err.message}".red, false)
       end
 
-      # Print selected roles.
+      # Print selected roles
       def print_the_selection(role_type, roles)
         cm, cl, cl_disp, s_type, r_type, cdh_ver, service, secured = role_type
 
@@ -143,7 +143,7 @@ module CMUX
         FMT.horizonal_splitter('-')
       end
 
-      # Perform rolling restart.
+      # Perform rolling restart
       def rolling_restart(role_type, roles)
         cm, cl, r_type = role_type.values_at(0, 1, 4)
         prepare_rolling_restart_for_rs(cm, cl, r_type)
@@ -165,7 +165,7 @@ module CMUX
         finish_rolling_restart(cm, cl, r_type)
       end
 
-      # Build command options.
+      # Build command options
       def build_opts
         opt = CHK::OptParser.new
         opt.banner(CMD, ALIAS)

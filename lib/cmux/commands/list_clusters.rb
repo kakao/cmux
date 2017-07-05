@@ -1,15 +1,15 @@
 module CMUX
   module Commands
-    # List clusters.
+    # List clusters
     class ListClusters
       extend Commands
 
-      # Command properties.
+      # Command properties
       CMD   = 'list-clusters'.freeze
       ALIAS = 'lc'.freeze
       DESC  = 'List clusters.'.freeze
 
-      # Regist command.
+      # Regist command
       reg_cmd(cmd: CMD, alias: ALIAS, desc: DESC)
 
       # Initialize
@@ -17,7 +17,7 @@ module CMUX
         @opt = build_opts
       end
 
-      # Run command.
+      # Run command
       def process
         query = @opt[:query] && @opt[:query].split(' ')
         return print_preview(*query.values_at(1, 4)) if @opt[:preview]
@@ -32,7 +32,7 @@ module CMUX
                   .freeze
       LABEL_PRV = %I[hostname role_stypes].freeze
 
-      # Select cluster(s) to print.
+      # Select cluster(s) to print
       def select_clusters(clusters)
         title  = "Press ctrl-p to open preview window.\n\n" \
                  "Select cluster(s):\n".red
@@ -47,7 +47,7 @@ module CMUX
         selected.map(&:split)
       end
 
-      # Print cluster list.
+      # Print cluster list
       def print_list(clusters)
         title  = "Cluster(s):\n\n"
         header = TABLE_HEADERS.values_at(*LABEL)
@@ -57,7 +57,7 @@ module CMUX
         puts title, table, footer
       end
 
-      # build CMUX table.
+      # build CMUX table
       def build_cluster_table(clusters)
         header = TABLE_HEADERS.values_at(*LABEL)
         body   = clusters.map { |c| c.values_at(*LABEL) }
@@ -65,7 +65,7 @@ module CMUX
         FMT.table(header: header, body: body, rjust: [2, 6, 7])
       end
 
-      # Print preview.
+      # Print preview
       def print_preview(cm, cl)
         hosts  = select_preview_hosts(cm, cl)
         header = TABLE_HEADERS.values_at(*LABEL_PRV)
@@ -77,12 +77,12 @@ module CMUX
         puts FMT.table(header: header, body: body)
       end
 
-      # Select hosts to preview.
+      # Select hosts to preview
       def select_preview_hosts(cm, cl)
         CM.hosts.select { |h| h[:cm] == cm && h[:cl] == cl }
       end
 
-      # Check command options.
+      # Check command options
       def chk_opts(opt)
         opts = opt.parse
         if opts[:preview] && !opts[:query]
@@ -94,7 +94,7 @@ module CMUX
         Utils.exit_with_msg(opt.parser, false)
       end
 
-      # Build command options.
+      # Build command options
       def build_opts
         opt = CHK::OptParser.new
         opt.banner(CMD, ALIAS)

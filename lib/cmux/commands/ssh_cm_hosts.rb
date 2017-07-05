@@ -1,16 +1,16 @@
 module CMUX
   module Commands
-    # Login via SSH to host(s) registered in these Cloudera Managers.
+    # Login via SSH to host(s) registered in these Cloudera Managers
     class SshCM
       extend Commands
 
-      # Command properties.
+      # Command properties
       CMD   = 'ssh-cm-hosts'.freeze
       ALIAS = 'ssh'.freeze
       DESC  = 'Login via SSH to host(s) registered in these Cloudera Managers.'
               .freeze
 
-      # Regist command.
+      # Regist command
       reg_cmd(cmd: CMD, alias: ALIAS, desc: DESC)
 
       # Initialize
@@ -18,7 +18,7 @@ module CMUX
         @opt = build_opts
       end
 
-      # Run command.
+      # Run command
       def process
         Utils.do_if_sync(@opt[:sync])
         cm    = CM.select_cm(all: true, fzf_opt: @opt[:query])
@@ -30,7 +30,7 @@ module CMUX
 
       LABEL = %I[cm cl_disp hostname role_stypes].freeze
 
-      # Select hosts to run SSH.
+      # Select hosts to run SSH
       def select_hosts(hosts)
         title  = "Press ctrl-p to open preview window.\n\n" \
                  "Select host(s) to login:\n".red
@@ -45,7 +45,7 @@ module CMUX
         selected.map(&:split)
       end
 
-      # Build CMUX Table.
+      # Build CMUX Table
       def build_host_table(hosts)
         header = TABLE_HEADERS.values_at(*LABEL)
         body   = hosts.map do |host|
@@ -56,14 +56,14 @@ module CMUX
         FMT.table(header: header, body: body)
       end
 
-      # Run SSH.
+      # Run SSH
       def run_ssh(hosts)
         ssh_user, ssh_opt = Utils.cmux_ssh_config
         cmds = hosts.map { |host| build_command(host, ssh_user, ssh_opt) }
         TmuxWindowSplitter.new(*cmds).process
       end
 
-      # Build command.
+      # Build command
       def build_command(host, ssh_user, ssh_opt)
         h      = [LABEL, host].transpose.to_h
         msg    = "[#{h[:cl_disp]}] #{h[:hostname]}\n " \
@@ -73,7 +73,7 @@ module CMUX
         "#{banner} ssh #{ssh_opt} #{ssh_user}@#{h[:hostname]} #{ps1}"
       end
 
-      # Build command options.
+      # Build command options
       def build_opts
         opt = CHK::OptParser.new
         opt.banner(CMD, ALIAS)

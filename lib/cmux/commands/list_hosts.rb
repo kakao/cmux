@@ -1,15 +1,15 @@
 module CMUX
   module Commands
-    # List hosts.
+    # List hosts
     class ListHosts
       extend Commands
 
-      # Command properties.
+      # Command properties
       CMD   = 'list-hosts'.freeze
       ALIAS = 'lh'.freeze
       DESC  = 'List hosts.'.freeze
 
-      # Regist command.
+      # Regist command
       reg_cmd(cmd: CMD, alias: ALIAS, desc: DESC)
 
       # Initialize
@@ -17,7 +17,7 @@ module CMUX
         @opt = build_opts
       end
 
-      # Run command.
+      # Run command
       def process
         Utils.do_if_sync(@opt[:sync])
         query = @opt[:query] && @opt[:query].split(' ')
@@ -31,7 +31,7 @@ module CMUX
       LABEL     = %I[cm cl_disp hostname ipaddress role_stypes rackid].freeze
       LABEL_PRV = %I[serviceType roleType roleHealth roleMOwners].freeze
 
-      # Select host(s) to print.
+      # Select host(s) to print
       def select_hosts(hosts)
         title  = "Press ctrl-p to open preview window.\n\n" \
                  "Select Host(s):\n".red
@@ -57,7 +57,7 @@ module CMUX
         FMT.table(header: header, body: body)
       end
 
-      # Print selected list.
+      # Print selected list
       def print_list(hosts)
         title  = "Hosts(s):\n".red
         header = TABLE_HEADERS.values_at(*LABEL)
@@ -65,7 +65,7 @@ module CMUX
         puts title, table
       end
 
-      # Print preview.
+      # Print preview
       def print_preview(cm, hostname)
         host = CM.hosts.find { |h| h[:cm] == cm && h[:hostname] == hostname }
         preview_host(host)
@@ -74,21 +74,21 @@ module CMUX
         preview_roles(host)
       end
 
-      # Print the details of the host.
+      # Print the details of the host
       def preview_host(host)
         puts host[:hostname].red
         puts "  Status   : #{CM.colorize_status(host[:host_health])}"
         puts "  RackID   : #{host[:rackid]}"
       end
 
-      # Print the details of the Cloudera Manager.
+      # Print the details of the Cloudera Manager
       def preview_cm(host)
         puts "\n* CM"
         puts "  Host     : #{host[:cm]}"
         puts "  CM Ver   : #{host[:cm_ver]}"
       end
 
-      # Print the details of the Cluster.
+      # Print the details of the Cluster
       def preview_cl(host)
         puts "\n* Cluster"
         puts "  Name     : #{host[:cl]}"
@@ -97,7 +97,7 @@ module CMUX
         puts "  Secured? : #{host[:cl_secured]}"
       end
 
-      # Print the details of roles.
+      # Print the details of roles
       def preview_roles(host)
         puts " \n* Roles "
         return if host[:roles].empty?
@@ -111,7 +111,7 @@ module CMUX
         table.each { |e| puts '  ' + e }
       end
 
-      # Check command options.
+      # Check command options
       def chk_opts(opt)
         opts = opt.parse
         if opts[:preview] && !opts[:query]
@@ -123,7 +123,7 @@ module CMUX
         Utils.exit_with_msg(opt.parser, false)
       end
 
-      # Build command options.
+      # Build command options
       def build_opts
         opt = CHK::OptParser.new
         opt.banner(CMD, ALIAS)
