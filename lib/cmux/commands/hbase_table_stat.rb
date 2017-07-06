@@ -53,7 +53,6 @@ module CMUX
         cmds = clusters.map do |cluster|
           build_command([LABEL, cluster].transpose.to_h)
         end
-
         TmuxWindowSplitter.new(*cmds).process
       end
 
@@ -61,9 +60,11 @@ module CMUX
       def build_command(cluster)
         banner = build_banner(cluster[:cl_disp], cluster[:cdh_ver])
         hduser = "HADOOP_USER_NAME=#{@opt[:user]}" if @opt[:user]
-        hts = HT.ht4cdh(tool: 'hbase-table-stat', cdh_ver: cluster[:cdh_ver])
-        opt = build_hts_opts(cluster[:cm], cluster[:cl])
-        "#{banner} #{hduser} java -jar #{HT_HOME}/#{hts} #{opt}"
+        hts    = HT.ht4cdh(tool: 'hbase-table-stat', cdh_ver: cluster[:cdh_ver])
+        opt    = build_hts_opts(cluster[:cm], cluster[:cl])
+        title  = "hbase-table-stat: #{cluster[:cl_disp]}"
+        command = "#{banner} #{hduser} java -jar #{HT_HOME}/#{hts} #{opt}"
+        { command: command, title: title }
       end
 
       # Build login banner

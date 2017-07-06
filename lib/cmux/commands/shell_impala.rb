@@ -64,8 +64,11 @@ module CMUX
 
       # Build command
       def build_command(host, ssh_user, ssh_opt, cmd)
-        banner = build_banner(host[:cl_disp], host[:hostname])
-        %(#{banner} ssh #{ssh_opt} #{ssh_user}@#{host[:hostname]} "#{cmd}")
+        banner  = build_banner(host[:cl_disp], host[:hostname])
+        title   = 'shell-impala'
+        command = %(#{banner} ssh #{ssh_opt} #{ssh_user}@#{host[:hostname]}) +
+                  %( "#{cmd}")
+        { command: command, title: title }
       end
 
       # Build login banner

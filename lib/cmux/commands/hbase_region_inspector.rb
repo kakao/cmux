@@ -54,16 +54,17 @@ module CMUX
         cmds = clusters.map do |cluster|
           build_command([LABEL, cluster].transpose.to_h)
         end
-
         TmuxWindowSplitter.new(*cmds).process
       end
 
       # Build command
       def build_command(cluster)
-        banner = build_banner(cluster[:cl_disp], cluster[:cdh_ver])
-        hri    = HRI.hri4cdh(cluster[:cdh_ver])
-        opt    = build_hri_opts(cluster[:cm], cluster[:cl])
-        "#{banner} #{HRI_HOME}/#{hri} #{opt}"
+        banner  = build_banner(cluster[:cl_disp], cluster[:cdh_ver])
+        hri     = HRI.hri4cdh(cluster[:cdh_ver])
+        opt     = build_hri_opts(cluster[:cm], cluster[:cl])
+        title   = "hbase-region-inspector: #{cluster[:cl_disp]}"
+        command = "#{banner} #{HRI_HOME}/#{hri} #{opt}"
+        { command: command, title: title }
       end
 
       # Build login banner

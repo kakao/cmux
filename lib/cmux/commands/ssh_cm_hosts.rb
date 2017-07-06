@@ -65,12 +65,14 @@ module CMUX
 
       # Build command
       def build_command(host, ssh_user, ssh_opt)
-        h      = [LABEL, host].transpose.to_h
-        msg    = "[#{h[:cl_disp]}] #{h[:hostname]}\n " \
-                 "- Roles: #{h[:role_stypes]}"
-        banner = Utils.login_banner(msg)
-        ps1    = Utils.ps1(h[:cl_disp])
-        "#{banner} ssh #{ssh_opt} #{ssh_user}@#{h[:hostname]} #{ps1}"
+        h       = [LABEL, host].transpose.to_h
+        msg     = "[#{h[:cl_disp]}] #{h[:hostname]}\n " \
+                  "- Roles: #{h[:role_stypes]}"
+        banner  = Utils.login_banner(msg)
+        ps1     = Utils.ps1(h[:cl_disp])
+        title   = "[#{h[:cl_disp]}] #{h[:hostname]}"
+        command = "#{banner} ssh #{ssh_opt} #{ssh_user}@#{h[:hostname]} #{ps1}"
+        { command: command, title: title }
       end
 
       # Build command options
