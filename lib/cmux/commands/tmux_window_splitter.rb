@@ -21,48 +21,72 @@ module CMUX
       # Run command
       def process
         @win_id, @first_pane_cmd = nil
-        tempfile = Utils.cr_tempfile(@args)
+        tempfiles = Utils.cr_tempfile(@args)
 
-        @args.zip(tempfile).map.with_index do |(e, tf), idx|
-          File.open(tf, 'w') { |file| file.puts e.to_s }
-          print_commands(idx, tf)
-          build_tmux_panes(idx, tf)
+        set_tmux_pane_border_format
+
+        @args.zip(tempfiles).map.with_index do |(arg, tempfile), idx|
+          write_commands(tempfile, arg)
+          print_commands(idx, tempfile)
+          build_tmux_panes(idx, tempfile)
         end
 
-        sync_pane
+        synchronize_pane
         run_first_pane_command
       end
 
-      # Print commands for debug
-      def print_commands(idx, tf)
-        puts "[#{idx}] #{File.read(tf)}" if Utils.cmux_tws_mode == 'debug'
+      # Set TMUX 'pane-border-format'
+      def set_tmux_pane_border_format
+        system 'tmux set-option pane-border-status bottom &&' \
+               'tmux set-window-option pane-border-format' \
+               ' "#{pane_index} #{pane_title}"'
       end
 
-      # Build TMUX panes
-      def build_tmux_panes(idx, tf)
-        idx.zero? ? build_first_pane(tf) : build_other_panes(tf)
+      # Get command and pane title
+      def get_command_title_from_arg(arg)
+        arg.is_a?(String) ? [arg, arg[0..9]] : arg.values_at(:command, :title)
       end
 
-      # Build first pane
-      def build_first_pane(tf)
-        pane_cnt = `tmux list-panes | wc -l`
-        if pane_cnt.strip.to_i > 1 && @args.length > 1
-          @win_id = `tmux new-window -F "\#{window_id}" -P "$SHELL -i #{tf}"`
-                    .chomp
-        else
-          @win_id = `tmux display-message -p \"\#{window_id}\"`.chomp
-          @first_pane_cmd = tf
+      # Write commands to tempfile
+      def write_commands(tempfile, arg)
+        command, title = get_command_title_from_arg(arg)
+        File.open(tempfile, 'w') do |f|
+          f.puts "printf '\\033]2;#{title}\\033\\';"
+          f.puts command
         end
       end
 
+      # Print commands for debug
+      def print_commands(idx, tempfile)
+        puts "[#{idx}] #{File.read(tempfile)}" if Utils.cmux_tws_mode == 'debug'
+      end
+
+      # Build TMUX panes
+      def build_tmux_panes(idx, tempfile)
+        idx.zero? ? build_first_pane(tempfile) : build_other_panes(tempfile)
+      end
+
+      # Build first pane
+      def build_first_pane(tempfile)
+        pane_cnt = `tmux list-panes | wc -l`
+        if pane_cnt.strip.to_i > 1 && @args.length > 1
+          command = %(tmux new-window -F "\#{window_id}") +
+                    %( -P "$SHELL -i #{tempfile}")
+        else
+          command = %(tmux display-message -p \"\#{window_id}\")
+          @first_pane_cmd = tempfile
+        end
+        @win_id = `#{command}`.chomp
+      end
+
       # Build other panes and execute each command in each pane
-      def build_other_panes(tf)
-        system %(tmux split-window -t #{@win_id} "$SHELL -i #{tf}";) +
+      def build_other_panes(tempfile)
+        system %(tmux split-window -t #{@win_id} "$SHELL -i #{tempfile}";) +
                %(tmux select-layout -t #{@win_id} tiled)
       end
 
       # TMUX synchronize-panes on
-      def sync_pane
+      def synchronize_pane
         cmd = 'tmux set-window-option synchronize-panes on'
         system cmd if @args.length > 1
       end
@@ -70,6 +94,8 @@ module CMUX
       # Run first pane command
       def run_first_pane_command
         system %($SHELL -i #{@first_pane_cmd})
+        system 'tmux set-window-option pane-border-format' \
+               ' "#{pane_index} #{pane_current_command}"'
       end
 
       # Check arugments
