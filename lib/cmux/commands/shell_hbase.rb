@@ -70,7 +70,7 @@ module CMUX
         principal = get_principal(list, cm, cl)
         cmd += %( kinit #{principal} &&) if principal
         cmd += %( HADOOP_USER_NAME=#{@opt[:user]}) if @opt[:user]
-        cmd +  %( hbase shell\")
+        cmd +  %( HBASE_SHELL_OPTS='#{ENV['HBASE_SHELL_OPTS']}' hbase shell\")
       end
 
       # Retrieve keberos principal for this HBase cluster
