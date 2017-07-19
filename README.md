@@ -294,10 +294,14 @@ Reload your shell configuration file and you should be able to see [the list of 
 * __Usage__
 
   ```
-  cmux COMMAND [OPTIONS]
+  [HBASE_SHELL_OPTS] cmux COMMAND [OPTIONS]
 
   Command:
       shell-hbase, sh
+
+  HBase shell options:
+      Extra options passed to the hbase shell.
+      e.g. HBASE_SHELL_OPTS=-Xmx2g
 
   Options:
       -s, --sync                       Run with synccm

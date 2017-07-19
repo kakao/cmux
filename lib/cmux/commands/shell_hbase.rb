@@ -100,8 +100,11 @@ module CMUX
 
       # Build command options
       def build_opts
-        opt = CHK::OptParser.new
-        opt.banner(CMD, ALIAS)
+        opt    = CHK::OptParser.new
+        banner = 'Usage: [HBASE_SHELL_OPTS] cmux COMMAND [OPTIONS]'
+        opt.banner(CMD, ALIAS, banner)
+        opt.separator('HBase shell options:')
+        opt.hbase_shell_option
         opt.separator('Options:')
         opt.sync_option
         opt.query_option

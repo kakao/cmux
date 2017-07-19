@@ -153,6 +153,14 @@ module CMUX
           end
         end
 
+        # The 'HBASE_SEHLL_OPTS' option
+        def hbase_shell_option
+          @parser.new do |opt|
+            opt.banner += "    Extra options passed to the hbase shell.\n" \
+                          "    e.g. HBASE_SHELL_OPTS=-Xmx2g\n\n"
+          end
+        end
+
         # Parse options
         def parse
           @parser.parse!
