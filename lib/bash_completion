@@ -27,23 +27,24 @@ __cmux_cmd_comp() {
 __cmux_cmd_comp_1st_opt() {
     local cmd_opt comp IFS OIFS
 
-    case $1 in
+    case "${COMP_WORDS[1]}" in
         manage-cloudera-scm-agent|scmagent)
-            cmd_opt="$(cmux "$1" -h \
+            cmd_opt="$(cmux "${COMP_WORDS[1]}" -h \
                         | sed '1,/Scmagent commands:$/d;/^$/,$d;s/[^a-z_]/ /g' \
                         | xargs -n 1)"
             height="$(__fzf_height "$(__line_cnt "$cmd_opt")")"
             comp=$(echo "$cmd_opt" \
                     | fzf +m --inline-info --reverse --header="COMMAND" \
-                        --tiebreak=begin --query="$2" --height="$height" \
+                        --tiebreak=begin --query="$1" --height="$height" \
                     | awk '{print $1}')
         ;;
         *)
-            cmd_opt="$(cmux "$1" -h | sed '1,/Options:$/d;/^$/,$d;s/^ *//g')"
+            cmd_opt="$(cmux "${COMP_WORDS[1]}" -h \
+                        | sed '1,/Options:$/d;/^$/,$d;s/^ *//g')"
             height="$(__fzf_height "$(__line_cnt "$cmd_opt")")"
             comp=$(echo "$cmd_opt" \
                     | fzf +m --inline-info --reverse --header="OPTIONS" \
-                        --tiebreak=begin --query="$2" --height="$height" \
+                        --tiebreak=begin --query="$1" --height="$height" \
                     | awk '{print $2}')
         ;;
     esac
@@ -60,6 +61,11 @@ __cmux_cmd_comp_opts() {
         *" -h "* | *" --help "*)
             return
         ;;
+    esac
+
+    case "${COMP_WORDS[1]}" in
+        ssh-tmux|tssh)
+            return
     esac
 
     cmd_opt_new=()
@@ -99,7 +105,7 @@ __cmux_comp() {
     fi
 
     if [ "${COMP_CWORD}" -eq 2 ]; then
-        __cmux_cmd_comp_1st_opt "$prev" "$prefix"
+        __cmux_cmd_comp_1st_opt "$prefix"
     fi
 
     if [ "${COMP_CWORD}" -ge 3 ]; then

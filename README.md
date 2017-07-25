@@ -350,6 +350,32 @@ Reload your shell configuration file and you should be able to see [the list of 
 
 * Press ctrl-p to open preview window.
 
+### `ssh-tmux`, `tssh`
+
+: Login via SSH to hosts specified in file or list.
+
+*--file option*
+
+<img src="https://api-metakage-4misc.kakao.com/dn/hadoopeng/cmux/cmux_tssh_file.gif" width=100%>
+
+*--list option*
+
+<img src="https://api-metakage-4misc.kakao.com/dn/hadoopeng/cmux/cmux_tssh_list.gif" width=100%>
+
+* __Usage__
+
+  ```
+  Usage: cmux COMMAND [OPTIONS]
+
+  Command:
+      ssh_tmux, tssh
+
+  Options: select only 1
+      -f, --file filename              File name where host list is stored
+      -l, --list host[ host ...]]      Space separated host list
+      -h, --help                       Show this message
+  ```
+
 ### `sync`
 
 : CM API Synchronizer
