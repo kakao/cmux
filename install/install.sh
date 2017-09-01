@@ -166,7 +166,7 @@ install_hbase_region_inspector () {
   done
 
   if [ -d "$HRI_HOME" ]; then
-    rm -f "$(find "$HRI_HOME"/* | grep -v $HRI_VER)"
+    find "$HRI_HOME"/* ! -name "hbase-region-inspector-$HRI_VER*" -exec rm {} \;
     chmod 700 "$HRI_HOME"/*
   fi
   echo
@@ -175,7 +175,7 @@ install_hbase_region_inspector () {
 # Install hbase-tools.
 install_hbase_tools () {
   local HT=("hbase-manager" "hbase-table-stat")
-  local HT_VER="1.4.1"
+  local HT_VER="1.4.2"
   local HBASE_VERS=("0.94" "0.96" "0.98" "1.0" "1.2")
   local BASE_URL="https://github.com/kakao/hbase-tools"
   local DOWNLOAD_URL="$BASE_URL/releases/download/v$HT_VER"
@@ -207,7 +207,7 @@ install_hbase_tools () {
   done
 
   if [ -d "$HT_HOME" ]; then
-    rm -f "$(find "$HT_HOME"/* | grep -v "$HT_VER")"
+    find "$HT_HOME"/* ! -name "*$HT_VER.jar" -exec rm {} \;
   fi
   echo
 }
