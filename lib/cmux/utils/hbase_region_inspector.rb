@@ -6,10 +6,11 @@ module CMUX
       class << self
         # The hbase-region-inspector for this CDH version.
         def hri4cdh(cdh_ver)
-          hri_ver = Utils.version_map(CDH_HRI_VER_MAP, cdh_ver)
-          pattern = 'hbase-region-inspector'
-          tools   = Dir.entries(HRI_HOME).select { |e| e.match(/^#{pattern}/) }
-          hri_ver == 'cdh4' ? tools.last : tools.first
+          hri_ver   = Utils.version_map(CDH_HRI_VER_MAP, cdh_ver)
+          pattern   = 'hbase-region-inspector'
+          hri_home  = Dir.entries(HRI_HOME)
+          tools     = hri_home.select { |e| e.match(/^#{pattern}/) }.sort
+          hri_ver  == 'cdh4' ? tools.last : tools.first
         end
 
         # Make hbase-region-inspector configuration files.
