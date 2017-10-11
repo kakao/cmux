@@ -144,22 +144,26 @@ module CMUX
       # Perform rolling restart
       def rolling_restart(role_type, roles)
         cm, cl, r_type = role_type.values_at(0, 1, 4)
-        prepare_rolling_restart_for_rs(cm, cl, r_type)
 
-        roles.each.with_index(1) do |r, idx|
-          hostname, role = r.values_at(2, 3)
-          print_restart_role_msg(hostname, role)
+        begin
+          prepare_rolling_restart_for_rs(cm, cl, r_type)
 
-          if continue?('Continue (y|n:stop)? ')
-            before_restart_role(cm, cl, hostname, r_type, role)
-            CM.restart_role(cm, cl, role, @max_wait)
-            after_restart_role(cm, cl, hostname, r_type, role)
-            wait_to_interval(idx, roles.length)
-          else
-            Utils.exit_with_msg('STOPPED'.red, true)
+          roles.each.with_index(1) do |r, idx|
+            hostname, role = r.values_at(2, 3)
+            print_restart_role_msg(hostname, role)
+
+            if continue?('Continue (y|n:stop)? ')
+              before_restart_role(cm, cl, hostname, r_type, role)
+              CM.restart_role(cm, cl, role, @max_wait)
+              after_restart_role(cm, cl, hostname, r_type, role)
+              wait_to_interval(idx, roles.length)
+            else
+              Utils.exit_with_msg('STOPPED'.red, true)
+            end
           end
+        ensure
+          finish_rolling_restart(cm, cl, r_type)
         end
-        finish_rolling_restart(cm, cl, r_type)
       end
 
       # Build command options
