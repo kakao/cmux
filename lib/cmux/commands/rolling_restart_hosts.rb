@@ -97,10 +97,13 @@ module CMUX
       # Perform rolling restart
       def rolling_restart(clusters, hosts)
         cm, cl = clusters.values_at(0, 1)
-        role_type = 'REGIONSERVER' if include_rs?(hosts)
-        prepare_rolling_restart_for_rs(cm, cl, role_type)
-        run_rolling_restart(hosts, cm, cl)
-        finish_rolling_restart(cm, cl, role_type)
+        begin
+          role_type = 'REGIONSERVER' if include_rs?(hosts)
+          prepare_rolling_restart_for_rs(cm, cl, role_type)
+          run_rolling_restart(hosts, cm, cl)
+        ensure
+          finish_rolling_restart(cm, cl, role_type)
+        end
       end
 
       # Run rolling restart
