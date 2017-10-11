@@ -141,8 +141,6 @@ module CMUX
       def set_interactive_mode
         q = 'Do you want to proceed with INTERACTIVE MODE (y|n)? '
         @interactive       = CHK.yn?(q.cyan, true)
-        @opt_hbase_manager = '--move-async'
-        @opt_hbase_manager.concat(' --force-proceed') unless @interactive
       end
 
       # Prepare to rolling restart for RegionServer
@@ -183,7 +181,7 @@ module CMUX
 
         case role_type
         when 'REGIONSERVER'
-          empty_rs(cm, cl, hostname, @exp_file, @opt_hbase_manager)
+          empty_rs(cm, cl, hostname, @exp_file)
         when 'NAMENODE'
           nns = CM.nameservices_assigned_nn(cm, cl, role)
           nns.each { |nn| CM.failover_nn(cm, cl, role, nn) }
@@ -194,7 +192,7 @@ module CMUX
       def after_restart_role(cm, cl, hostname, role_type, role)
         case role_type
         when 'REGIONSERVER'
-          import_rs(cm, cl, hostname, @exp_file, @opt_hbase_manager)
+          import_rs(cm, cl, hostname, @exp_file)
         when 'JOURNALNODE'
           CM.hdfs_role_edits(cm, cl, role)
         when *CHK_RTYPES
@@ -260,13 +258,13 @@ module CMUX
       end
 
       # Move all Regions to other RegionServers.
-      def empty_rs(cm, cl, hostname, exp_file, opt)
+      def empty_rs(cm, cl, hostname, exp_file)
         Utils.print_str_to_fit_pane('Move all Regions other RegionServers.'.red)
 
         rs = HT.get_rs_from_exp_file(exp_file, hostname)
 
         if rs
-          cmd = HT.gen_hbase_manager_empty_command(cm, cl, rs, opt)
+          cmd = HT.gen_hbase_manager_empty_command(cm, cl, rs)
           Utils.print_str_to_fit_pane("  └── #{cmd}")
           Utils.awaiter(msg: 'Moving  ', time: true) do
             HT.run_hbase_manager_empty(cmd)
@@ -278,13 +276,13 @@ module CMUX
       end
 
       # Import a assignment of Regions from export file.
-      def import_rs(cm, cl, hostname, exp_file, opt)
+      def import_rs(cm, cl, hostname, exp_file)
         Utils.print_str_to_fit_pane('Import assignment of Regions'.red)
 
         rs = HT.get_rs_from_exp_file(exp_file, hostname)
 
         if rs
-          cmd = HT.gen_hbase_manager_import_command(cm, cl, exp_file, rs, opt)
+          cmd = HT.gen_hbase_manager_import_command(cm, cl, exp_file, rs)
           Utils.print_str_to_fit_pane("  └── #{cmd}")
           Utils.awaiter(msg: 'Importing  ', time: true) do
             HT.run_hbase_manager_import(cmd)

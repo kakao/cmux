@@ -49,9 +49,9 @@ module CMUX
         end
 
         # Generate a hbase-manager empty command.
-        def gen_hbase_manager_empty_command(cm, cl, rs, opt)
+        def gen_hbase_manager_empty_command(cm, cl, rs)
           gen_hbase_manager_command(cm, cl) do |arr|
-            opt = "--skip-export #{opt}"
+            opt = '--skip-export --move-async --force-proceed'
             opt += gen_krb_opt(cm) if arr[3]
             "java -jar #{HT_HOME}/#{arr[0]}" \
             " assign #{arr[1]}:#{arr[2]} empty #{rs} #{opt}"
@@ -59,8 +59,9 @@ module CMUX
         end
 
         # Generate a hbase-manager import command.
-        def gen_hbase_manager_import_command(cm, cl, exp_file, rs, opt)
+        def gen_hbase_manager_import_command(cm, cl, exp_file, rs)
           gen_hbase_manager_command(cm, cl) do |arr|
+            opt = '--move-async --force-proceed'
             opt += gen_krb_opt(cm) if arr[3]
             "java -jar #{HT_HOME}/#{arr[0]}" \
             " assign #{arr[1]}:#{arr[2]} import #{exp_file} --rs=#{rs} #{opt}"
