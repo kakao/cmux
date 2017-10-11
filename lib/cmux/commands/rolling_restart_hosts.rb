@@ -107,9 +107,13 @@ module CMUX
       def run_rolling_restart(hosts, cm, cl)
         hosts.each.with_index(1) do |(host, props), idx|
           print_restart_host_msg(host)
-          stop_roles(cm, cl, host, props[:roles])
-          start_roles(cm, cl, host, props[:roles])
-          wait_to_interval(idx, hosts.length)
+          if continue?('Continue (y|n:stop)? ')
+            stop_roles(cm, cl, host, props[:roles])
+            start_roles(cm, cl, host, props[:roles])
+            wait_to_interval(idx, hosts.length)
+          else
+            Utils.exit_with_msg('STOPPED'.red, true)
+          end
         end
       end
 
