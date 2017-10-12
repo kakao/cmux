@@ -259,7 +259,7 @@ module CMUX
 
       # Move all Regions to other RegionServers.
       def empty_rs(cm, cl, hostname, exp_file)
-        Utils.print_str_to_fit_pane('Move all Regions other RegionServers.'.red)
+        Utils.print_str_to_fit_pane('Move all Regions other RegionServers'.red)
 
         rs = HT.get_rs_from_exp_file(exp_file, hostname)
 

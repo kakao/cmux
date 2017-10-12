@@ -384,9 +384,9 @@ module CMUX
             puts "\b[OK]".green
 
             msg = "#{hostname_a} is now a STANDBY NameNode"
-            FMT.puts_str("  └── #{msg}", true)
+            FMT.puts_str("└── #{msg}", true)
           else
-            msg = "#{'Skip Failover'.red}: This is NOT a ACTIVE NameNode."
+            msg = "#{'Skip Failover'.red}: This is NOT a ACTIVE NameNode"
             FMT.puts_str(msg, true)
           end
         end
