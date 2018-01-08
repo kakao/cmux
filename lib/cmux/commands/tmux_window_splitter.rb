@@ -51,8 +51,7 @@ module CMUX
       def write_commands(tempfile, arg)
         command, title = get_command_title_from_arg(arg)
         File.open(tempfile, 'w') do |f|
-          f.puts "printf '\\033]2;#{title}\\033\\';"
-          f.puts command
+          f.puts " printf '\\033]2;#{title}\\033\\'; #{command}"
         end
       end
 
