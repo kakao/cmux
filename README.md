@@ -180,7 +180,7 @@ Reload your shell configuration file and you should be able to see [the list of 
       -p, --preview                    (Internal option) Preview mode
   ```
 
-* Press ctrl-p to open preview window.
+* Press `ctrl-p` to open preview window.
 
 ### `list-hosts`, `lh`
 
@@ -203,7 +203,7 @@ Reload your shell configuration file and you should be able to see [the list of 
       -p, --preview                    (Internal option) Preview mode
   ```
 
-* Press ctrl-p to open preview window.
+* Press `ctrl-p` to open preview window.
 
 ### `manage-cloudera-scm-agent`, `scmagent`
 
@@ -348,7 +348,7 @@ Reload your shell configuration file and you should be able to see [the list of 
       -h, --help                       Show this message
   ```
 
-* Press ctrl-p to open preview window.
+* Press `ctrl-p` to open preview window.
 
 ### `ssh-tmux`, `tssh`
 
