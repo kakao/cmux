@@ -175,7 +175,7 @@ install_hbase_region_inspector () {
 # Install hbase-tools.
 install_hbase_tools () {
   local HT=("hbase-manager" "hbase-table-stat")
-  local HT_VER="1.4.2"
+  local HT_VER="1.5.3"
   local HBASE_VERS=("0.94" "0.96" "0.98" "1.0" "1.2")
   local BASE_URL="https://github.com/kakao/hbase-tools"
   local DOWNLOAD_URL="$BASE_URL/releases/download/v$HT_VER"
