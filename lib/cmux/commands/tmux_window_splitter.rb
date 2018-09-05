@@ -37,7 +37,7 @@ module CMUX
 
       # Set TMUX border format
       def set_tmux_border_format
-        system 'tmux set-option pane-border-status bottom &&' \
+        system 'tmux set-option pane-border-status top &&' \
                'tmux set-window-option pane-border-format' \
                ' "#{pane_index} #{pane_title}"'
       end
