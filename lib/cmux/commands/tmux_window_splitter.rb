@@ -23,7 +23,7 @@ module CMUX
         @win_id, @first_pane_cmd = nil
         tempfiles = Utils.cr_tempfile(@args)
 
-        set_tmux_pane_border_format
+        set_tmux_border_format
 
         @args.zip(tempfiles).map.with_index do |(arg, tempfile), idx|
           write_commands(tempfile, arg)
@@ -35,8 +35,8 @@ module CMUX
         run_first_pane_command
       end
 
-      # Set TMUX 'pane-border-format'
-      def set_tmux_pane_border_format
+      # Set TMUX border format
+      def set_tmux_border_format
         system 'tmux set-option pane-border-status bottom &&' \
                'tmux set-window-option pane-border-format' \
                ' "#{pane_index} #{pane_title}"'
