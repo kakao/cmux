@@ -76,7 +76,7 @@ module CMUX
       # Run command.
       def run_cmd_capture3(cmd)
         out, err, status = Open3.capture3(cmd)
-        return out.chomp if err.to_s.empty?
+        return out.chomp if status.success?
         yield err, status
       end
 
