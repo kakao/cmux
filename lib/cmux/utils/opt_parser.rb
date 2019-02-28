@@ -116,6 +116,20 @@ module CMUX
           end
         end
 
+        # The '--serial-interval' option
+        def serial_interval_option
+          @opts[:serial_interval] = -1
+          @parser.new do |opt|
+            opt_short = '-i'
+            opt_long  = '--serial-interval N'
+            opt_text  =
+              'Run with interval(sec) in serially. (default: Run in parallel)'
+            opt.on_tail(opt_short, opt_long, Integer, opt_text) do |e|
+              @opts[:serial_interval] = e
+            end
+          end
+        end
+
         # The '--file' option
         def file_option
           @parser.new do |opt|

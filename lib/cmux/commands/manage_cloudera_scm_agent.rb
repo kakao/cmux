@@ -58,12 +58,29 @@ module CMUX
         ssh_user, ssh_opt = Utils.cmux_ssh_config
         ssh_opt = "#{ssh_opt} -T -o LogLevel=QUIET"
 
-        Utils.awaiter(msg: 'Processing  ', newline: true) do
-          hosts.pmap do |host|
+        serial_interval = @opt[:serial_interval]
+
+        if serial_interval < 0
+          Utils.awaiter(msg: 'Processing  ', newline: true) do
+            hosts.pmap do |host|
+              h      = [LABEL, host].transpose.to_h
+              banner = "[#{h[:cm]}] #{h[:cl_disp]} - #{h[:hostname]}"
+              cmd    = build_command(cmd_opt)
+
+              [banner, `ssh #{ssh_opt} #{ssh_user}@#{h[:hostname]} "#{cmd}"`]
+            end.to_h
+          end
+        else
+          hosts.map do |host|
             h      = [LABEL, host].transpose.to_h
             banner = "[#{h[:cm]}] #{h[:cl_disp]} - #{h[:hostname]}"
             cmd    = build_command(cmd_opt)
-            [banner, `ssh #{ssh_opt} #{ssh_user}@#{h[:hostname]} "#{cmd}"`]
+
+            puts "#{'[Processing]'.red} @#{h[:hostname]} #{cmd}"
+            response = `ssh #{ssh_opt} #{ssh_user}@#{h[:hostname]} "#{cmd}"`
+
+            sleep serial_interval
+            [banner, response]
           end.to_h
         end
       end
@@ -129,6 +146,7 @@ module CMUX
         opt.separator('Options:')
         opt.sync_option
         opt.help_option
+        opt.serial_interval_option
         chk_args(opt.parser)
         opt.parse
       end

@@ -225,6 +225,7 @@ Reload your shell configuration file and you should be able to see [the list of 
   Options:
       -s, --sync                       Run with synccm
       -h, --help                       Show this message
+      -i, --serial-interval N          Run with interval(sec) in serially. (default: Run in parallel)
   ```
 
 ### `manage-rackid`, `rackid`
