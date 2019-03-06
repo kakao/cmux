@@ -7,3 +7,4 @@ lib/hbase-region-inspector/
 lib/hbase-tools/
 ext/
 !ext/example.rb
+.idea
