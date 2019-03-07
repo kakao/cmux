@@ -120,9 +120,9 @@ set_cmux_env () {
     fi
   done
 
-  read -ep $'  Enter SSH connection options (default option: -o LogLevel=ERROR -t): ' SSH_OPT
+  read -ep $'  Enter SSH connection options (default option: -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=ERROR -t): ' SSH_OPT
 
-  SSH_OPT_DFT="-o LogLevel=ERROR -t"
+  SSH_OPT_DFT="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=ERROR -t"
   echo 'ssh:'                              >  "$CMUX_YAML"
   echo "  user: \"$SSH_USER\""             >> "$CMUX_YAML"
   echo "  opt:  \"$SSH_OPT_DFT $SSH_OPT\"" >> "$CMUX_YAML"

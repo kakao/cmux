@@ -7,7 +7,7 @@ module CMUX
       # Command properties
       CMD   = 'manage-cloudera-scm-agent'.freeze
       ALIAS = 'scmagent'.freeze
-      DESC  = 'Run clouder-scm-agent in parallel.'.freeze
+      DESC  = 'Run clouder-scm-agent'.freeze
 
       # Regist command
       reg_cmd(cmd: CMD, alias: ALIAS, desc: DESC)
@@ -23,8 +23,7 @@ module CMUX
         Utils.do_if_sync(@opt[:sync])
         cm    = CM.select_cm(all: true)
         hosts = select_hosts(CM.hosts(cm))
-        res   = run_scmagent(hosts, @args.shift)
-        print_result(res)
+        run_scmagent(hosts, @args.shift)
       end
 
       private
@@ -55,23 +54,46 @@ module CMUX
 
       # Run 'cloudera-scm-agent' commands
       def run_scmagent(hosts, cmd_opt)
+        if @opt[:interval] == 0
+          res = Utils.awaiter(msg: 'Processing  ', newline: true) do
+                  hosts.pmap do |host|
+                    h = [LABEL, host].transpose.to_h
+                    [banner(h), run_cmd(h, cmd_opt)]
+                  end.to_h
+                end
+          print_result(res)
+        else
+          hosts.map do |host|
+            h = [LABEL, host].transpose.to_h
+            msg = "Processing #{banner(h)}  "
+            res = Utils.awaiter(msg: msg, newline: false) do
+                    {'' => run_cmd(h, cmd_opt)}
+                  end
+            print "\b"
+            print_result(res)
+          end
+        end
+      end
+
+      # Run command
+      def run_cmd(host, cmd_opt)
         ssh_user, ssh_opt = Utils.cmux_ssh_config
         ssh_opt = "#{ssh_opt} -T -o LogLevel=QUIET"
+        cmd    = build_command(cmd_opt)
+        res = `ssh #{ssh_opt} #{ssh_user}@#{host[:hostname]} "#{cmd}"`
+        sleep @opt[:interval]
+        res
+      end
 
-        Utils.awaiter(msg: 'Processing  ', newline: true) do
-          hosts.pmap do |host|
-            h      = [LABEL, host].transpose.to_h
-            banner = "[#{h[:cm]}] #{h[:cl_disp]} - #{h[:hostname]}"
-            cmd    = build_command(cmd_opt)
-            [banner, `ssh #{ssh_opt} #{ssh_user}@#{h[:hostname]} "#{cmd}"`]
-          end.to_h
-        end
+      # Banner string
+      def banner(host)
+        "[#{host[:cm]}] #{host[:cl_disp]} - #{host[:hostname]}"
       end
 
       # Build command
       def build_command(cmd_opt)
         %[echo \"$(xxd -p #{SCMAGENT_SH})\" | xxd -p -r] +
-          %( > /tmp/cmux_scmagent.sh; sh /tmp/cmux_scmagent.sh #{cmd_opt})
+          %[ > /tmp/cmux_scmagent.sh; sh /tmp/cmux_scmagent.sh #{cmd_opt}]
       end
 
       # Print result
@@ -109,27 +131,30 @@ module CMUX
       end
 
       # Check arugments
-      def chk_args(parser)
+      def chk_args(opt)
         raise CMUXNoArgumentError if @args.empty?
-        unless SCMAGENT_ARGS.include?(@args[0])
+        unless (SCMAGENT_ARGS + %w[-h --help]).include?(@args[0])
           raise CMUXInvalidArgumentError, @args[0]
         end
       rescue StandardError => e
         puts "cmux: #{CMD}: #{e.message}\n".red
-        Utils.exit_with_msg(parser, false)
+        Utils.exit_with_msg(opt.parser, false)
       end
 
       # Build command options
       def build_opts
         opt    = CHK::OptParser.new
         banner = 'Usage: cmux COMMAND SCMAGENT_COMMANDS [OPTIONS]'
+        text   = 'Run with interval in serially' +
+                 ' (0 or without this option: parallel)'
         opt.banner(CMD, ALIAS, banner)
         opt.separator('Scmagent commands:')
         opt.scmagent
         opt.separator('Options:')
         opt.sync_option
+        opt.interval_option({:default => 0, :text => text})
         opt.help_option
-        chk_args(opt.parser)
+        chk_args(opt)
         opt.parse
       end
     end

@@ -53,13 +53,22 @@ module CMUX
           end
         end
 
+        # Add the description of the 'hbase_shell' to the banner
+        def hbase_shell_option(opts = {})
+          @parser.new do |opt|
+            opt.banner += "    Extra options passed to the hbase shell.\n" \
+                          "    e.g. HBASE_SHELL_OPTS=-Xmx2g\n\n"
+          end
+        end
+
+        ## Options
         # The '--sync' option
-        def sync_option
+        def sync_option(opts = {})
           @opts[:sync] = false
           @parser.new do |opt|
-            opt_short = '-s'
-            opt_long  = '--sync'
-            opt_text  = 'Run with synccm'
+            opt_short = opts[:short] || '-s'
+            opt_long  = opts[:long]  || '--sync'
+            opt_text  = opts[:text]  || 'Run with synccm'
             opt.on_tail(opt_short, opt_long, opt_text) do |e|
               @opts[:sync] = e
             end
@@ -67,11 +76,11 @@ module CMUX
         end
 
         # The '--query' option
-        def query_option
+        def query_option(opts = {})
           @parser.new do |opt|
-            opt_short = '-q'
-            opt_long  = '--query query_string'
-            opt_text  = 'Run fzf with given query'
+            opt_short = opts[:short] || '-q'
+            opt_long  = opts[:long]  || '--query query_string'
+            opt_text  = opts[:text]  || 'Run fzf with given query'
             opt.on_tail(opt_short, opt_long, opt_text) do |e|
               @opts[:query] = "-q #{e}"
             end
@@ -79,11 +88,12 @@ module CMUX
         end
 
         # The '--user' option
-        def hadoop_user_name_option
+        def hadoop_user_name_option(opts = {})
           @parser.new do |opt|
-            opt_short = '-u'
-            opt_long  = '--user HADOOP_USER_NAME'
-            opt_text  = 'Run this command with specified HADOOP_USER_NAME'
+            opt_short = opts[:short] || '-u'
+            opt_long  = opts[:long]  || '--user HADOOP_USER_NAME'
+            opt_text  = opts[:text]  || 'Run this command with specified' +
+                                        ' HADOOP_USER_NAME'
             opt.on_tail(opt_short, opt_long, opt_text) do |e|
               @opts[:user] = e
             end
@@ -91,12 +101,12 @@ module CMUX
         end
 
         # The '--preview' option
-        def preview_option
+        def preview_option(opts = {})
           @opts[:preview] = false
           @parser.new do |opt|
-            opt_short = '-p'
-            opt_long  = '--preview'
-            opt_text  = '(Internal option) Preview mode'
+            opt_short = opts[:short] || '-p'
+            opt_long  = opts[:long]  || '--preview'
+            opt_text  = opts[:text]  || '(Internal option) Preview mode'
             opt.on_tail(opt_short, opt_long, opt_text) do |e|
               @opts[:preview] = e
             end
@@ -104,24 +114,31 @@ module CMUX
         end
 
         # The '--interval' option
-        def interval_option
-          @opts[:interval] = 10
+        def interval_option(opts = {})
+          default = opts[:default] || 10
+
           @parser.new do |opt|
-            opt_short = '-i'
-            opt_long  = '--interval N'
-            opt_text  = 'Interval (default: 10)'
+            opt_short = opts[:short] || '-i'
+            opt_long  = opts[:long]  || '--interval N'
+            opt_text  = opts[:text]  || 'Run with interval' +
+                                        "(default: #{default} sec)"
             opt.on_tail(opt_short, opt_long, Integer, opt_text) do |e|
+              raise StandardError, "'interval' must be positive number" if e < 0
               @opts[:interval] = e
             end
+            @opts[:interval] = default unless @opts[:interval]
           end
+        rescue StandardError => e
+          puts "cmux: #{CMD}: #{e.message}\n".red
+          Utils.exit_with_msg(opt.parser, false)
         end
 
-        # The '--file' option
-        def file_option
+        # Thf '--file' option
+        def file_option(opts = {})
           @parser.new do |opt|
-            opt_short = '-f'
-            opt_long  = '--file filename'
-            opt_text  = 'File name where host list is stored'
+            opt_short = opts[:short] || '-f'
+            opt_long  = opts[:long]  || '--file filename'
+            opt_text  = opts[:text]  || 'File name where host list is stored'
             opt.on_tail(opt_short, opt_long, opt_text) do |e|
               @opts[:file] = e
             end
@@ -129,11 +146,11 @@ module CMUX
         end
 
         # The '--list' option
-        def list_option
+        def list_option(opts = {})
           @parser.new do |opt|
-            opt_short = '-l'
-            opt_long  = '--list host[ host ...]]'
-            opt_text  = 'Space separated host list'
+            opt_short = opts[:short] || '-l'
+            opt_long  = opts[:long]  || '--list host[ host ...]]'
+            opt_text  = opts[:text]  || 'Space separated host list'
             opt.on_tail(opt_short, opt_long, opt_text) do |e|
               @opts[:list] = e
             end
@@ -141,23 +158,15 @@ module CMUX
         end
 
         # The '--help' option
-        def help_option
+        def help_option(opts = {})
           @parser.new do |opt|
-            opt_short = '-h'
-            opt_long  = '--help'
-            opt_text  = 'Show this message'
+            opt_short = opts[:short] || '-h'
+            opt_long  = opts[:long]  || '--help'
+            opt_text  = opts[:text]  || 'Show this message'
             opt.on_tail(opt_short, opt_long, opt_text) do
               puts opt
               exit
             end
-          end
-        end
-
-        # The 'HBASE_SEHLL_OPTS' option
-        def hbase_shell_option
-          @parser.new do |opt|
-            opt.banner += "    Extra options passed to the hbase shell.\n" \
-                          "    e.g. HBASE_SHELL_OPTS=-Xmx2g\n\n"
           end
         end
 

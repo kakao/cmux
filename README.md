@@ -133,7 +133,7 @@ Reload your shell configuration file and you should be able to see [the list of 
   Options:
       -s, --sync                       Run with synccm
       -q, --query query_string         Run fzf with given query
-      -i, --interval N                 Interval (default: 10)
+      -i, --interval N                 Run with interval(default: 10 sec)
       -h, --help                       Show this message
   ```
 
@@ -154,7 +154,7 @@ Reload your shell configuration file and you should be able to see [the list of 
   Options:
       -s, --sync                       Run with synccm
       -q, --query query_string         Run fzf with given query
-      -i, --interval N                 Interval (default: 10)
+      -i, --interval N                 Run with interval(default: 10 sec)
       -u, --user HADOOP_USER_NAME      Run this command with specified HADOOP_USER_NAME
       -h, --help                       Show this message
   ```
@@ -225,6 +225,7 @@ Reload your shell configuration file and you should be able to see [the list of 
   Options:
       -s, --sync                       Run with synccm
       -h, --help                       Show this message
+      -i, --interval N                 Run with interval in serially (0 or without this option: parallel)
   ```
 
 ### `manage-rackid`, `rackid`
