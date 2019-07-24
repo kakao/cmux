@@ -134,6 +134,8 @@ Reload your shell configuration file and you should be able to see [the list of 
       -s, --sync                       Run with synccm
       -q, --query query_string         Run fzf with given query
       -i, --interval N                 Run with interval(default: 10 sec)
+      -u, --user-mode                  User mode
+      -p, --port N                     Port number
       -h, --help                       Show this message
   ```
 
@@ -156,6 +158,7 @@ Reload your shell configuration file and you should be able to see [the list of 
       -q, --query query_string         Run fzf with given query
       -i, --interval N                 Run with interval(default: 10 sec)
       -u, --user HADOOP_USER_NAME      Run this command with specified HADOOP_USER_NAME
+      -p, --port N                     Port number
       -h, --help                       Show this message
   ```
 
