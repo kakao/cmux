@@ -49,7 +49,7 @@ module CMUX
 
   ### hbase-region-inspector
   # default port
-  HRI_PORT = 7777
+  HRI_PORT = 7778
   CDH_HRI_VER_MAP = {
     '5.0' => '',
     '4.0' => 'cdh4'

@@ -15,7 +15,7 @@ module CMUX
       # Initialize
       def initialize(*)
         @opt = build_opts
-        @hri_port = HRI_PORT
+        @hri_port = (@opt[:port] || HRI_PORT).to_i
       end
 
       # Run command
@@ -51,7 +51,8 @@ module CMUX
 
       # Run 'hbase-region-inspector'
       def run_hri(clusters)
-        cmds = clusters.map do |cluster|
+        cmds = clusters.each_with_index.map do |cluster, index|
+          build_hri_port_number(index)
           build_command([LABEL, cluster].transpose.to_h)
         end
         TmuxWindowSplitter.new(*cmds).process
@@ -75,8 +76,7 @@ module CMUX
 
       # Build hbase-region-inspector options
       def build_hri_opts(cm, cl)
-        build_hri_port_number
-
+        admin       = @opt[:user_mode] ? '' : '--admin'
         zk_leader   = CM.find_zk_leader(cm, cl)
         zk          = zk_leader[:hostname]
         zk_port     = CM.zk_port(cm, cl, zk_leader)
@@ -84,13 +84,13 @@ module CMUX
         krb_opt     = zk
         krb_opt     = HRI.gen_krb_opt(cm, zk, zk_port) if krb_enabled
 
-        "--admin #{krb_opt} #{@hri_port} #{@opt[:interval]}"
+        "#{admin} #{krb_opt} #{@hri_port} #{@opt[:interval]}"
       end
 
       # Build a port number of hbase-region-inspector.
-      def build_hri_port_number
-        @hri_port += 1
-        @hri_port += 1 while CHK.port_open?(nil, @hri_port, 1)
+      def build_hri_port_number(index)
+        @hri_port += index
+        @hri_port += index while CHK.port_open?(nil, @hri_port, 1)
       end
 
       # Build command options
@@ -101,6 +101,8 @@ module CMUX
         opt.sync_option
         opt.query_option
         opt.interval_option
+        opt.user_mode_option
+        opt.port_option
         opt.help_option
         opt.parse
       end
