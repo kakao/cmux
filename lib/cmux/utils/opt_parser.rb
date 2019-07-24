@@ -157,6 +157,30 @@ module CMUX
           end
         end
 
+        # The '--port' option
+        def port_option(opts = {})
+          @parser.new do |opt|
+            opt_short = opts[:short] || '-p'
+            opt_long  = opts[:long]  || '--port N'
+            opt_text  = opts[:text]  || 'Port number'
+            opt.on_tail(opt_short, opt_long, opt_text) do |e|
+              @opts[:port] = e
+            end
+          end
+        end
+
+        # The '--user-mode' option
+        def user_mode_option(opts = {})
+          @parser.new do |opt|
+            opt_short = opts[:short] || '-u'
+            opt_long  = opts[:long]  || '--user-mode'
+            opt_text  = opts[:text]  || 'User mode'
+            opt.on_tail(opt_short, opt_long, opt_text) do |e|
+              @opts[:user_mode] = e
+            end
+          end
+        end
+
         # The '--help' option
         def help_option(opts = {})
           @parser.new do |opt|
