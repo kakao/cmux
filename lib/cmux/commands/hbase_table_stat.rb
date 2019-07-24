@@ -15,6 +15,7 @@ module CMUX
       # Initialize
       def initialize(*)
         @opt = build_opts
+        @hts_port = (@opt[:port] || HTS_PORT).to_i
       end
 
       # Run command
@@ -50,7 +51,8 @@ module CMUX
 
       # Run 'hbase-table-stat'
       def run_hts(clusters)
-        cmds = clusters.map do |cluster|
+        cmds = clusters.each_with_index.map do |cluster, index|
+          build_hts_port_number(index) if @opt[:port]
           build_command([LABEL, cluster].transpose.to_h)
         end
         TmuxWindowSplitter.new(*cmds).process
@@ -80,9 +82,16 @@ module CMUX
         zk_port     = CM.zk_port(cm, cl, zk_leader)
         krb_enabled = CM.hbase_kerberos_enabled?(cm, cl)
 
-        opt = "#{zk}:#{zk_port} --interval #{@opt[:interval]}"
+        opt = "#{zk}:#{zk_port} --interval #{@opt[:interval]}" \
+              " --port #{@hts_port}"
         opt += HT.gen_krb_opt(cm) if krb_enabled
         opt
+      end
+
+      # Build a port number of hbase-table-stat
+      def build_hts_port_number(index)
+        @hts_port += index
+        @hts_port += index while CHK.port_open?(nil, @hts_port, 1)
       end
 
       # Build command options
@@ -94,6 +103,7 @@ module CMUX
         opt.query_option
         opt.interval_option
         opt.hadoop_user_name_option
+        opt.port_option
         opt.help_option
         opt.parse
       end

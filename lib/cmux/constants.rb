@@ -56,6 +56,8 @@ module CMUX
   }.freeze
 
   ### hbase-tools
+  # default port
+  HTS_PORT = 6667
   CDH_HT_VER_MAP = {
     '5.8' => '1.2',
     '5.6' => '1.0',
