@@ -7,7 +7,7 @@ module CMUX
       # Command properties
       CMD   = 'hbase-table-stat'.freeze
       ALIAS = 'hts'.freeze
-      DESC  = 'Run hbase-table-stat.'.freeze
+      DESC  = 'Run hbase-table-stat'.freeze
 
       # Regist command
       reg_cmd(cmd: CMD, alias: ALIAS, desc: DESC)

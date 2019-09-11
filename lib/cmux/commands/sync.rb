@@ -7,7 +7,7 @@ module CMUX
       # Command properties
       CMD   = 'sync'.freeze
       ALIAS = ''.freeze
-      DESC  = 'CM API Synchronizer.'.freeze
+      DESC  = 'CM API Synchronizer'.freeze
 
       # Regist command
       reg_cmd(cmd: CMD, alias: ALIAS, desc: DESC)

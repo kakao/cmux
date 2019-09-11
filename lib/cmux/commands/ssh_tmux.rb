@@ -7,7 +7,7 @@ module CMUX
       # Command properties.
       CMD   = 'ssh-tmux'.freeze
       ALIAS = 'tssh'.freeze
-      DESC  = 'Login via SSH to hosts specified in file or list.'.freeze
+      DESC  = 'Login via SSH to hosts specified in file or list'.freeze
 
       TITLE  = "Choose host(s) to login:\n".red.freeze
       HEADER = ['Host'].freeze

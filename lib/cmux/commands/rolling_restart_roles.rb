@@ -5,7 +5,7 @@ module CMUX
       # Command properties.
       CMD   = 'rolling-restart-roles'.freeze
       ALIAS = 'rrr'.freeze
-      DESC  = 'Rolling restart roles.'.freeze
+      DESC  = 'Rolling restart roles'.freeze
 
       # Regist command
       reg_cmd(cmd: CMD, alias: ALIAS, desc: DESC)

@@ -7,7 +7,7 @@ module CMUX
       # Command properties
       CMD   = 'web-service'.freeze
       ALIAS = 'websvc'.freeze
-      DESC  = 'Open Service Web Console as the default browser.'.freeze
+      DESC  = 'Open Service Web Console as the default browser'.freeze
 
       # Regist command
       reg_cmd(cmd: CMD, alias: ALIAS, desc: DESC)

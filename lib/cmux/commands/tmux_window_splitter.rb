@@ -7,7 +7,7 @@ module CMUX
       # Command properties
       CMD   = 'tmux-window-splitter'.freeze
       ALIAS = 'tws'.freeze
-      DESC  = 'Split tmux window and execute each command in each pane.'.freeze
+      DESC  = 'Split tmux window and execute each command in each pane'.freeze
 
       # Regist command
       reg_cmd(cmd: CMD, alias: ALIAS, desc: DESC)

@@ -7,7 +7,7 @@ module CMUX
       # Command properties
       CMD   = 'web-cm'.freeze
       ALIAS = 'webcm'.freeze
-      DESC  = 'Open the Cloudera Manager Web Console(s) as the default browser.'
+      DESC  = 'Open the Cloudera Manager Web Console(s) as the default browser'
               .freeze
 
       # Regist command.

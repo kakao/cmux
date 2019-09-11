@@ -8,7 +8,7 @@ module CMUX
       CMD   = 'manage-rackid'.freeze
       ALIAS = 'rackid'.freeze
       DESC  = 'Shows how the rackID(s) is allocated in CM and updates ' \
-              'rackID(s).'.freeze
+              'rackID(s)'.freeze
 
       # Regist command
       reg_cmd(cmd: CMD, alias: ALIAS, desc: DESC)

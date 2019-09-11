@@ -7,7 +7,7 @@ module CMUX
       # Command properties
       CMD   = 'shell-hbase'.freeze
       ALIAS = 'sh'.freeze
-      DESC  = 'Run hbase shell.'.freeze
+      DESC  = 'Run hbase shell'.freeze
 
       # Regist command
       reg_cmd(cmd: CMD, alias: ALIAS, desc: DESC)

@@ -7,7 +7,7 @@ module CMUX
       # Command properties
       CMD   = 'list-hosts'.freeze
       ALIAS = 'lh'.freeze
-      DESC  = 'List hosts.'.freeze
+      DESC  = 'List hosts'.freeze
 
       # Regist command
       reg_cmd(cmd: CMD, alias: ALIAS, desc: DESC)

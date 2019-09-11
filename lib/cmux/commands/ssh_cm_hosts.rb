@@ -7,7 +7,7 @@ module CMUX
       # Command properties
       CMD   = 'ssh-cm-hosts'.freeze
       ALIAS = 'ssh'.freeze
-      DESC  = 'Login via SSH to host(s) registered in these Cloudera Managers.'
+      DESC  = 'Login via SSH to host(s) registered in these Cloudera Managers'
               .freeze
 
       # Regist command

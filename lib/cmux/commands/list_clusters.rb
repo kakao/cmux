@@ -7,7 +7,7 @@ module CMUX
       # Command properties
       CMD   = 'list-clusters'.freeze
       ALIAS = 'lc'.freeze
-      DESC  = 'List clusters.'.freeze
+      DESC  = 'List clusters'.freeze
 
       # Regist command
       reg_cmd(cmd: CMD, alias: ALIAS, desc: DESC)
@@ -45,7 +45,6 @@ module CMUX
         Utils.exit_if_empty(selected, 'No items selected')
         selected.map(&:split)
       end
-
 
       # build CMUX table
       def build_cluster_table(clusters)

@@ -7,7 +7,7 @@ module CMUX
       # Command properties
       CMD   = 'hbase-region-inspector'.freeze
       ALIAS = 'hri'.freeze
-      DESC  = 'Run hbase-region-inspector.'.freeze
+      DESC  = 'Run hbase-region-inspector'.freeze
 
       # Regist command
       reg_cmd(cmd: CMD, alias: ALIAS, desc: DESC)

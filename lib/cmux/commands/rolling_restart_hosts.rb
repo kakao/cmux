@@ -5,7 +5,7 @@ module CMUX
       # Command properties
       CMD   = 'rolling-restart-hosts'.freeze
       ALIAS = 'rrh'.freeze
-      DESC  = 'Rolling restart roles of hosts.'.freeze
+      DESC  = 'Rolling restart roles of hosts'.freeze
 
       # Regist command
       reg_cmd(cmd: CMD, alias: ALIAS, desc: DESC)
