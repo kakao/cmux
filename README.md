@@ -481,11 +481,10 @@ See details [CMUX Extension](https://github.com/kakao/cmux/wiki/CMUX-Extension).
 
 ## Command completion
 
-Supported __only bash completion__ using [fzf](https://github.com/junegunn/fzf).
+Support interactive command completion for both `bash` and `zsh` (implemented by [fzf](https://github.com/junegunn/fzf).
 
 <img src="https://api-metakage-4misc.kakao.com/dn/hadoopeng/cmux/cmux_bash_completion.gif" width=100%>
 
-cf. An example of the [Command List](#command-list) uses [fzf-tmux](https://github.com/junegunn/fzf/blob/master/bin/fzf-tmux).
 
 # License
 This software is licensed under the [Apache 2 license](LICENSE), quoted below.
