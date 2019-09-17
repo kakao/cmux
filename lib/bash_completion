@@ -1,116 +1,147 @@
+#!/usr/bin/env bash
+# CMUX interactive command completion for Bash
+
 bind '"\e[0n": redraw-current-line'
 
-__line_cnt() {
-    wc -l <<< "$1"
+# Set FZF_DEFAULT_OPTS
+# shellcheck disable=2153
+fzf_default_opts="$FZF_DEFAULT_OPTS --no-multi --inline-info --reverse "
+
+# Find the height of the FZF window to display search results
+#
+# Globals:
+#   None
+# Arguments:
+#   $1 number of lines of search results
+# Returns:
+#   the height fo the FZF window
+cmux::fzf::height() {
+  echo $(( $1 + 2 ))
 }
 
-__fzf_height() {
-    echo $(($1+2))
+# Select the CMUX command
+#
+# Globals:
+#   fzf_default_opts fzf_query_str
+# Arguments:
+#   None
+# Returns:
+#   CMUX command
+cmux::completion::commands() {
+  local cmux_cmds=()
+
+  readarray -t cmux_cmds <<< "$(
+      cmux |
+      sed $'s/\xc2\xa0/ /g' |
+      sed '1,/Commands:$/d;/^$/,$d;s/^ *//g'
+  )"
+
+  COMPREPLY=(
+    "$(
+      printf '%s\n' "${cmux_cmds[@]}" |
+      FZF_DEFAULT_OPTS="$fzf_default_opts" \
+      fzf --header="COMMANDS" \
+          --query="$fzf_query_str" \
+          --height="$(cmux::fzf::height "${#cmux_cmds[@]}")" |
+      awk '{print $1}'
+    )"
+  )
+
+  printf '\e[5n'
+  return
 }
 
-__cmux_cmd_comp() {
-    local cmux_cmd comp IFS OIFS
+# Select the CMUX command option
+#
+# Globals:
+#   current fzf_default_opts comp_words
+# Arguments:
+#   None
+# Returns:
+#   CMUX command option
+cmux::completion::options() {
+  local scmagent_cmd cmux_cmd_opts _comp_words
 
-    cmux_cmd="$(cmux | sed $'s/\xc2\xa0/ /g' \
-                | sed '1,/Commands:$/d;/^$/,$d;s/^ *//g')"
-    height="$(__fzf_height "$(__line_cnt "$cmux_cmd")")"
+  # If '--help' option has been already selected
+  if echo "${COMP_WORDS[@]}" | grep -E " -h| --help" > /dev/null ; then
+    return 0
+  fi
 
-    comp=$(echo "$cmux_cmd" \
-            | fzf +m --inline-info --reverse --header="COMMANDS" \
-                --tiebreak=begin --query="$1" --height="$height" \
-            | awk '{print $1}')
-    COMPREPLY=( "$comp" )
-    printf '\e[5n'
-    return
-}
+  case "${COMP_WORDS[1]}" in
+    # If only one command option can be selected
+    ssh-tmux|tssh)
+      [[ "$COMP_CWORD" -gt 2 ]] && return 0
+      ;;
+    # If manage-cloudera-scm-agent is selected
+    manage-cloudera-scm-agent|scmagent)
+      if [[ "$COMP_CWORD" -eq 2 ]]; then
+        readarray -t scmagent_cmd <<< "$(
+            cmux "${COMP_WORDS[1]}" --help |
+            sed '1,/Scmagent commands:$/d;/^$/,$d;s/[^a-z_]/ /g' |
+            xargs -n 1
+        )"
 
-__cmux_cmd_comp_1st_opt() {
-    local cmd_opt comp IFS OIFS
+        COMPREPLY=(
+          "$(
+            printf '%s\n' "${scmagent_cmd[@]}" |
+            FZF_DEFAULT_OPTS="$fzf_default_opts" \
+            fzf --header="COMMAND" \
+                --query="$fzf_query_str" \
+                --height="$(cmux::fzf::height "${#scmagent_cmd[@]}")" |
+            awk '{print $1}'
+          )"
+        )
+        printf '\e[5n'
+        return
+      fi
+      ;;
+  esac
 
-    case "${COMP_WORDS[1]}" in
-        manage-cloudera-scm-agent|scmagent)
-            cmd_opt="$(cmux "${COMP_WORDS[1]}" -h \
-                        | sed '1,/Scmagent commands:$/d;/^$/,$d;s/[^a-z_]/ /g' \
-                        | xargs -n 1)"
-            height="$(__fzf_height "$(__line_cnt "$cmd_opt")")"
-            comp=$(echo "$cmd_opt" \
-                    | fzf +m --inline-info --reverse --header="COMMAND" \
-                        --tiebreak=begin --query="$1" --height="$height" \
-                    | awk '{print $1}')
-        ;;
-        *)
-            cmd_opt="$(cmux "${COMP_WORDS[1]}" -h \
-                        | sed '1,/Options:$/d;/^$/,$d;s/^ *//g')"
-            height="$(__fzf_height "$(__line_cnt "$cmd_opt")")"
-            comp=$(echo "$cmd_opt" \
-                    | fzf +m --inline-info --reverse --header="OPTIONS" \
-                        --tiebreak=begin --query="$1" --height="$height" \
-                    | awk '{print $2}')
-        ;;
-    esac
+  # Command options
+  readarray -t cmux_cmd_opts <<< "$(
+    cmux "${COMP_WORDS[1]}" --help |
+    sed '1,/Options:$/d;/^$/,$d;s/^ *//g'
+  )"
 
-    COMPREPLY=( "$comp" )
-    printf '\e[5n'
-    return
-}
+  # shellcheck disable=2206
+  _comp_words=(${COMP_WORDS[@]:2})
+  if [[ -n $fzf_query_str ]]; then
+    unset '_comp_words[${#_comp_words[@]}-1]'
+  fi
 
-__cmux_cmd_comp_opts() {
-    local cmd_opt cmd_opt_new comp IFS OIFS
-
-    case " ${COMP_WORDS[@]} " in
-        *" -h "* | *" --help "*)
-            return
-        ;;
-    esac
-
-    case "${COMP_WORDS[1]}" in
-        ssh-tmux|tssh)
-            return
-    esac
-
-    cmd_opt_new=()
-    cmd_opt="$(cmux "${COMP_WORDS[1]}" -h \
-                | sed '1,/Options:$/d;/^$/,$d;s/^ *//g')"
-
-    OIFS=IFS
-    IFS=$'\n'
-    for opt in $(echo "${cmd_opt[@]}"); do
-        opt_short=$(echo "$opt" | awk -F, '{print $1}')
-        opt_long=$(echo "$opt" | awk '{print $2}')
-        if [[ " ${COMP_WORDS[@]} " != *" $opt_short "* &&\
-              " ${COMP_WORDS[@]} " != *" $opt_long "* ]]; then
-            cmd_opt_new+=($opt)
-        fi
+  # Remove selected option from command options
+  # shellcheck disable=SC2184,SC2068
+  for i in "${!cmux_cmd_opts[@]}"; do
+    for comp_word in ${_comp_words[@]}; do
+      if echo "${cmux_cmd_opts[$i]}" | grep -w -- "$comp_word" > /dev/null; then
+        unset cmux_cmd_opts[$i]
+      fi
     done
-    IFS=$OIFS
+  done
 
-    height="$(__fzf_height "${#cmd_opt_new[@]}")"
-    comp=$(printf '%s\n' "${cmd_opt_new[@]}" \
-           | fzf +m --inline-info --reverse --header="OPTIONS" \
-              --tiebreak=begin --query="$1" --height="$height" \
-           | awk '{print $2}')
-    COMPREPLY=( "$comp" )
-    printf '\e[5n'
-    return
+  COMPREPLY=(
+    "$(
+      printf '%s\n' "${cmux_cmd_opts[@]}" |
+      FZF_DEFAULT_OPTS="$fzf_default_opts" \
+      fzf --header="OPTIONS" \
+          --query="$fzf_query_str" \
+          --height="$(cmux::fzf::height "${#cmux_cmd_opts[@]}")" |
+      awk '{print $2}'
+    )"
+  )
+
+  printf '\e[5n'
+  return
 }
 
-__cmux_comp() {
-    # local cmd=$1
-    # local cur=$2
-    local prev=$3
-    local prefix="${COMP_WORDS[COMP_CWORD]}"
+cmux::completion () {
+  fzf_query_str="${COMP_WORDS[COMP_CWORD]}"
 
-    if [ "${COMP_CWORD}" -eq 1 ]; then
-        __cmux_cmd_comp "$prefix"
-    fi
-
-    if [ "${COMP_CWORD}" -eq 2 ]; then
-        __cmux_cmd_comp_1st_opt "$prefix"
-    fi
-
-    if [ "${COMP_CWORD}" -ge 3 ]; then
-        __cmux_cmd_comp_opts "$prefix" 
-    fi
+  if [[ "${COMP_CWORD}" -eq 1 ]]; then
+    cmux::completion::commands
+  else
+    cmux::completion::options
+  fi
 }
 
-complete -F __cmux_comp -o default -o bashdefault cmux
+complete -F cmux::completion -o default -o bashdefault cmux
