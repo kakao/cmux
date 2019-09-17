@@ -1,7 +1,7 @@
 module CMUX
   ### CMUX
   # CMUX directories
-  CMUX_HOME = File.expand_path('../../../', __FILE__).freeze
+  CMUX_HOME = File.expand_path('../..', __dir__).freeze
   CONF_HOME = File.join(CMUX_HOME, 'config').freeze
   LIB_HOME  = File.join(CMUX_HOME, 'lib').freeze
   DATA_HOME = File.join(CMUX_HOME, 'data').freeze
