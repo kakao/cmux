@@ -4,9 +4,8 @@ if [[ $- =~ i ]]; then
     source $(dirname ${BASH_SOURCE[0]})/lib/bash_completion
   elif [ -n "$ZSH_VERSION" ]; then
     export PATH=$(dirname "${(%):-%x}")/bin:$PATH
-    fpath=($(dirname "${(%):-%x}")/lib $fpath)
+    source $(dirname "${(%):-%x}")/lib/cmux_completion.plugin.zsh
   else
     echo "Not suppported"
   fi
 fi
-
