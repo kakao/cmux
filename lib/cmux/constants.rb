@@ -18,26 +18,26 @@ module CMUX
 
   # CMUX table headers.
   TABLE_HEADERS = {
-    cm:           'Cloudera Manager',
-    cm_ver:       'CM Ver',
-    cm_api_ver:   'CM API Ver',
-    cl:           'Cluster',
-    cl_disp:      'Cludera Display Name',
-    cdh_ver:      'CDH Ver',
-    hosts:        'Hosts',
-    hostid:       'HostID',
-    hostname:     'Hostname',
-    ipaddress:    'IP Address',
-    serviceType:  'Service Type',
-    serviceName:  'Service',
-    roleType:     'Role Type',
-    roleHealth:   'Health',
-    roleMOwners:  'Maintenance',
-    role_stypes:  'Roles',
+    cm: 'Cloudera Manager',
+    cm_ver: 'CM Ver',
+    cm_api_ver: 'CM API Ver',
+    cl: 'Cluster',
+    cl_disp: 'Cludera Display Name',
+    cdh_ver: 'CDH Ver',
+    hosts: 'Hosts',
+    hostid: 'HostID',
+    hostname: 'Hostname',
+    ipaddress: 'IP Address',
+    serviceType: 'Service Type',
+    serviceName: 'Service',
+    roleType: 'Role Type',
+    roleHealth: 'Health',
+    roleMOwners: 'Maintenance',
+    role_stypes: 'Roles',
     roleHAStatus: 'HA Status',
-    rackid:       'RackID-CM',
-    level:        'Level',
-    url:          'URL'
+    rackid: 'RackID-CM',
+    level: 'Level',
+    url: 'URL'
   }.freeze
 
   ### rolling-restart-roles
@@ -81,15 +81,15 @@ module CMUX
 
   ### websvc
   ROLE_PORT = {
-    'NAMENODE'        => '50070',
-    'MASTER'          => '60010',
-    'REGIONSERVER'    => '60030',
+    'NAMENODE' => '50070',
+    'MASTER' => '60010',
+    'REGIONSERVER' => '60030',
     'RESOURCEMANAGER' => '8088',
-    'JOBHISTORY'      => '19888',
-    'SOLR_SERVER'     => '8983',
-    'KUDU_MASTER'     => '8051',
-    'HUE_SERVER'      => '8888',
-    'OOZIE_SERVER'    => '11000'
+    'JOBHISTORY' => '19888',
+    'SOLR_SERVER' => '8983',
+    'KUDU_MASTER' => '8051',
+    'HUE_SERVER' => '8888',
+    'OOZIE_SERVER' => '11000'
   }.freeze
 
   ### API
@@ -121,75 +121,75 @@ module CMUX
   # Role types
   ROLE_TYPES = {
     # Cloudera Manager
-    'ALERTPUBLISHER'             => 'ALRP',
-    'SERVICEMONITOR'             => 'SMON',
-    'EVENTSERVER'                => 'EVTS',
-    'HOSTMONITOR'                => 'HMON',
-    'ACTIVITYMONITOR'            => 'AMON',
-    'REPORTSMANAGER'             => 'RM',
+    'ALERTPUBLISHER' => 'ALRP',
+    'SERVICEMONITOR' => 'SMON',
+    'EVENTSERVER' => 'EVTS',
+    'HOSTMONITOR' => 'HMON',
+    'ACTIVITYMONITOR' => 'AMON',
+    'REPORTSMANAGER' => 'RM',
     # HDFS
-    'NAMENODE'                   => 'NN',
-    'DATANODE'                   => 'DN',
-    'SECONDARYNAMENODE'          => 'SNN',
-    'BALANCER'                   => 'BL',
-    'HTTPFS'                     => 'HFS',
-    'FAILOVERCONTROLLER'         => 'FC',
-    'GATEWAY'                    => 'G',
-    'JOURNALNODE'                => 'JN',
-    'NFSGATEWAY'                 => 'NFSG',
+    'NAMENODE' => 'NN',
+    'DATANODE' => 'DN',
+    'SECONDARYNAMENODE' => 'SNN',
+    'BALANCER' => 'BL',
+    'HTTPFS' => 'HFS',
+    'FAILOVERCONTROLLER' => 'FC',
+    'GATEWAY' => 'G',
+    'JOURNALNODE' => 'JN',
+    'NFSGATEWAY' => 'NFSG',
     # MAPREDUCE
-    'JOBTRACKER'                 => 'JT',
-    'TASKTRACKER'                => 'TT',
+    'JOBTRACKER' => 'JT',
+    'TASKTRACKER' => 'TT',
     # HBASE
-    'MASTER'                     => 'HM',
-    'REGIONSERVER'               => 'RS',
-    'HBASETHRIFTSERVER'          => 'HBTS',
-    'HBASERESTSERVER'            => 'HBRES',
+    'MASTER' => 'HM',
+    'REGIONSERVER' => 'RS',
+    'HBASETHRIFTSERVER' => 'HBTS',
+    'HBASERESTSERVER' => 'HBRES',
     # YARN
-    'RESOURCEMANAGER'            => 'RM',
-    'NODEMANAGER'                => 'NM',
-    'JOBHISTORY'                 => 'JHS',
+    'RESOURCEMANAGER' => 'RM',
+    'NODEMANAGER' => 'NM',
+    'JOBHISTORY' => 'JHS',
     # OOZIE
-    'OOZIE_SERVER'               => 'OS',
+    'OOZIE_SERVER' => 'OS',
     # ZOOKEEPER
-    'SERVER'                     => 'ZK',
+    'SERVER' => 'ZK',
     # HUE
-    'HUE_SERVER'                 => 'H',
-    'KT_RENEWER'                 => 'K',
-    'HUE_LOAD_BALANCER'          => 'HLB',
+    'HUE_SERVER' => 'H',
+    'KT_RENEWER' => 'K',
+    'HUE_LOAD_BALANCER' => 'HLB',
     # FLUME
-    'AGENT'                      => 'A',
+    'AGENT' => 'A',
     # IMPALA
-    'IMPALAD'                    => 'ID',
-    'STATESTORE'                 => 'ISS',
-    'CATALOGSERVER'              => 'ICS',
+    'IMPALAD' => 'ID',
+    'STATESTORE' => 'ISS',
+    'CATALOGSERVER' => 'ICS',
     # HIVE
-    'HIVESERVER2'                => 'HS2',
-    'HIVEMETASTORE'              => 'HMS',
-    'WEBHCAT'                    => 'WHCS',
+    'HIVESERVER2' => 'HS2',
+    'HIVEMETASTORE' => 'HMS',
+    'WEBHCAT' => 'WHCS',
     # SOLR
-    'SOLR_SERVER'                => 'SS_SOLR',
+    'SOLR_SERVER' => 'SS_SOLR',
     # SQOOP
-    'SQOOP_SERVER'               => 'S2S',
+    'SQOOP_SERVER' => 'S2S',
     # SENTRY
-    'SENTRY_SERVER'              => 'SS_SENTRY',
+    'SENTRY_SERVER' => 'SS_SENTRY',
     # KS_INDEXER
-    'HBASE_INDEXER'              => 'HI',
+    'HBASE_INDEXER' => 'HI',
     # SPARK_ON_YARN
-    'SPARK_YARN_HISTORY_SERVER'  => 'HS',
+    'SPARK_YARN_HISTORY_SERVER' => 'HS',
     'SPARK2_YARN_HISTORY_SERVER' => 'HS',
     # KUDU
-    'KUDU_MASTER'                => 'M',
-    'KUDU_TSERVER'               => 'TS',
+    'KUDU_MASTER' => 'M',
+    'KUDU_TSERVER' => 'TS',
     # KAFKA
-    'KAFKA_BROKER'               => 'KB',
-    'KAFKA_MIRRORMAKER'          => 'KMM',
-    'KAFKA_MANAGER_WEB_UI'       => 'KMWU',
+    'KAFKA_BROKER' => 'KB',
+    'KAFKA_MIRRORMAKER' => 'KMM',
+    'KAFKA_MANAGER_WEB_UI' => 'KMWU',
     # MESOS
-    'MESOS_MASTER_SERVER'        => 'MMS',
-    'MESOS_SLAVE_SERVER'         => 'MSS',
-    'MESOS_MARATHON'             => 'M',
+    'MESOS_MASTER_SERVER' => 'MMS',
+    'MESOS_SLAVE_SERVER' => 'MSS',
+    'MESOS_MARATHON' => 'M',
     # DOCKER
-    'DOCKER_DAEMON'              => 'D'
+    'DOCKER_DAEMON' => 'D'
   }.freeze
 end
