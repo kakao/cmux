@@ -481,7 +481,7 @@ See details [CMUX Extension](https://github.com/kakao/cmux/wiki/CMUX-Extension).
 
 ## Command completion
 
-Support interactive command completion for both `bash` and `zsh` (implemented by [fzf](https://github.com/junegunn/fzf).
+Support interactive command completion for both `bash` and `zsh` (implemented by [fzf](https://github.com/junegunn/fzf)).
 
 <img src="https://api-metakage-4misc.kakao.com/dn/hadoopeng/cmux/cmux_bash_completion.gif" width=100%>
 
