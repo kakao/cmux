@@ -15,8 +15,10 @@ CMUX is a set of commands for managing CDH clusters using [Cloudera Manager REST
 ## Limitations and Restrictions
 
 CMUX is only tested on:
-* MAC OS X 10.10(Yosemite) or later
-* CentOS 6.6, 7.1, 7.2
+* MAC OS X 10.14.x(Mojave) or later
+* CentOS 6.6, 7.1, 7.2, 7.3
+* Bash 4.0 or later
+* Z Shell 5.7.0 or later
 
 Some commands require SSH connection to the managed servers.
 
@@ -31,7 +33,7 @@ Some commands require SSH connection to the managed servers.
 
 ## How to Install
 
-### Step 1. Run the installation script.
+### Step 1. Run the installation script
 
 Clone this repository and run install script and follow the instructions.
 
@@ -40,11 +42,11 @@ git clone https://github.com/kakao/cmux.git
 sh cmux/install/install.sh
 ```
 
-### Step 2. Write Cloudera Manager Server list on `cm.yaml`.
+### Step 2. Write Cloudera Manager Server list on `cm.yaml`
 
 Write down the list of your Cloudera Manager servers in YAML format and save as `config/cm.yaml`.
 
-##### Sample 1. Simple configuration.
+##### Sample 1. Simple configuration
 ```yaml
 # Hostname of Cloudera Manager (FQDN)
 cm1.kakao.cmux:
@@ -59,7 +61,7 @@ cm1.kakao.cmux:
   use_ssl: false
 ```
 
-##### Sample 2. Full configuration.
+##### Sample 2. Full configuration
 ```yaml
 # Hostname of Cloudera Manager (FQDN)
 cm2.kakao.cmux:
