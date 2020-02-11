@@ -90,4 +90,9 @@ class Array
       Hash[self]
     end
   end
+
+  # Count duplicates in Arrays
+  def dup_hash
+    each_with_object(Hash.new(0)) { |h, v| v[h] += 1 }
+  end
 end
