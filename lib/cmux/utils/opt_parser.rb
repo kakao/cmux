@@ -133,14 +133,26 @@ module CMUX
           Utils.exit_with_msg(opt.parser, false)
         end
 
-        # Thf '--file' option
+        # The '--file' option
         def file_option(opts = {})
           @parser.new do |opt|
             opt_short = opts[:short] || '-f'
             opt_long  = opts[:long]  || '--file filename'
-            opt_text  = opts[:text]  || 'File name where host list is stored'
+            opt_text  = opts[:text]  || 'File name'
             opt.on_tail(opt_short, opt_long, opt_text) do |e|
               @opts[:file] = e
+            end
+          end
+        end
+
+        # The '--dir' option
+        def dir_option(opts = {})
+          @parser.new do |opt|
+            opt_short = opts[:short] || '-d'
+            opt_long  = opts[:long]  || '--dir directory'
+            opt_text  = opts[:text]  || 'Directory path'
+            opt.on_tail(opt_short, opt_long, opt_text) do |e|
+              @opts[:dir] = e
             end
           end
         end
