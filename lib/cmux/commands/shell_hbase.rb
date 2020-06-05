@@ -85,7 +85,7 @@ module CMUX
 
       # Build command
       def build_command(cluster, ssh_user, ssh_opt, cmd)
-        hm      = CM.hm_active(cluster[:cm], cluster[:cl])
+        hm      = CM.hbase_master(cluster[:cm], cluster[:cl])
         banner  = build_banner(cluster[:cl_disp], hm)
         title   = 'shell-hbase'
         command = "#{banner} ssh #{ssh_opt} #{ssh_user}@#{hm} #{cmd}"

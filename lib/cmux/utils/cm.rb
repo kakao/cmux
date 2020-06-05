@@ -149,14 +149,14 @@ module CMUX
           port[:value] || port[:default]
         end
 
-        # Find the Active HMaster of a specific cluster
-        def find_hm_active(cm, cl)
-          find_host_with_any_role(cm, cl, 'HM(A)')
+        # Find the HMaster (preferably active) of a specific cluster
+        def find_hbase_master(cm, cl)
+          find_host_with_any_role(cm, cl, 'HM(A)', 'HM(S)', 'HM(-)')
         end
 
-        # The Active HMaster of a specific cluster
-        def hm_active(cm, cl)
-          find_hm_active(cm, cl)[:hostname]
+        # The HMaster (preferably active) of a specific cluster
+        def hbase_master(cm, cl)
+          find_hbase_master(cm, cl)[:hostname]
         end
 
         # Retrieve SECURITY_REALM of the Cloudera Manager
@@ -191,7 +191,7 @@ module CMUX
 
         # Check that the kerberos authentication for hbase is enabled
         def hbase_kerberos_enabled?(cm, cl)
-          hm_active    = find_hm_active(cm, cl)
+          hm_active    = find_hbase_master(cm, cl)
           service_type = 'HBASE'
           role_type    = 'MASTER'
           config_name  = 'hbase_security_authentication'
